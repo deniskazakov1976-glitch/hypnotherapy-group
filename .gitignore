@@ -1,0 +1,8 @@
+# Инструментарий рабочей папки (не часть сайта)
+.agents/
+.zcodeignore
+.zcode/
+
+# Служебные файлы
+Thumbs.db
+.DS_Store
