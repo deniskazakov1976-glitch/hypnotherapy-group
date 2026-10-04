@@ -149,64 +149,168 @@ class App {
       switchAuthTab('therapist');
     });
 
-    // Кнопка быстрого входа ведущего
-    const btnEnterTherapist = document.getElementById('btn-enter-as-therapist');
-    if (btnEnterTherapist) btnEnterTherapist.addEventListener('click', async () => {
-      try {
-        await authService.loginAsTherapist();
-        this.showToast('Добро пожаловать в кабинет ведущего, Денис!');
-        this.checkSessionAndRoute();
-      } catch (err) {
-        this.showToast('Ошибка входа ведущего: ' + err.message, 'error');
-      }
-    });
+    // Форма входа ведущего с паролем
+    const formTherapist = document.getElementById('form-therapist-login');
+    if (formTherapist) {
+      formTherapist.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const pass = document.getElementById('therapist-password').value;
+        try {
+          await authService.loginAsTherapist(pass);
+          this.showToast('Добро пожаловать в кабинет ведущего, Денис!');
+          this.checkSessionAndRoute();
+        } catch (err) {
+          this.showToast(err.message, 'error');
+        }
+      });
+    }
 
-    // Кнопка переключения на ведущего в шапке (если пользователь вошел как участник)
+    // Кнопка переключения на ведущего в шапке (с подтверждением пароля)
     const btnSwitchAdmin = document.getElementById('btn-switch-to-admin');
-    if (btnSwitchAdmin) btnSwitchAdmin.addEventListener('click', () => {
-      authService.switchToAdmin();
-      this.showToast('Вы переключены в кабинет ведущего (Денис Казаков)!');
-      this.checkSessionAndRoute();
-    });
+    if (btnSwitchAdmin) {
+      btnSwitchAdmin.addEventListener('click', async () => {
+        const cur = authService.getCurrentUser();
+        if (cur && cur.role === 'admin') {
+          this.checkSessionAndRoute();
+          return;
+        }
+        const pass = prompt('Для перехода в кабинет ведущего введите секретный пароль:');
+        if (!pass) return;
+        try {
+          await authService.switchToAdmin(pass);
+          this.showToast('Вы переключены в кабинет ведущего (Денис Казаков)!');
+          this.checkSessionAndRoute();
+        } catch (err) {
+          this.showToast(err.message, 'error');
+        }
+      });
+    }
 
-    // Отправка формы входа
+    // Отправка формы входа участника (по имени или email)
     formLogin.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const name = document.getElementById('login-name').value;
+      const identifier = document.getElementById('login-name').value;
       const pass = document.getElementById('login-password').value;
       try {
-        await authService.login(name, pass);
-        this.showToast(`Добро пожаловать, ${name}!`);
+        const user = await authService.login(identifier, pass);
+        this.showToast(`Добро пожаловать, ${user.name}!`);
         this.checkSessionAndRoute();
       } catch (err) {
         this.showToast(err.message, 'error');
       }
     });
 
-    // Отправка формы регистрации
+    // Отправка формы регистрации (Имя + Email + Пароль)
     formRegister.addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('reg-name').value;
+      const email = document.getElementById('reg-email').value;
       const pass = document.getElementById('reg-password').value;
       try {
-        await authService.register(name, pass);
-        this.showToast(`Регистрация успешна! Заполните вводную анкету.`);
+        await authService.register(name, email, pass);
+        this.showToast('Регистрация успешна! Заполните вводную анкету.');
         this.checkSessionAndRoute();
       } catch (err) {
         this.showToast(err.message, 'error');
       }
     });
 
-    // Вход через VK ID
-    document.getElementById('btn-vk-login').addEventListener('click', async () => {
-      try {
-        const user = await authService.loginWithVk();
-        this.showToast(`Вход через ВКонтакте выполнен: ${user.name}`);
-        this.checkSessionAndRoute();
-      } catch (err) {
-        this.showToast('Ошибка авторизации через ВКонтакте', 'error');
-      }
-    });
+    // Восстановление пароля по email
+    const linkForgot = document.getElementById('link-forgot-password');
+    if (linkForgot) {
+      linkForgot.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.openModal('modal-reset-password');
+      });
+    }
+
+    const linkForgotTherapist = document.getElementById('link-forgot-therapist-password');
+    if (linkForgotTherapist) {
+      linkForgotTherapist.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.openModal('modal-reset-password');
+      });
+    }
+
+    const modalResetClose = document.getElementById('modal-reset-close');
+    if (modalResetClose) {
+      modalResetClose.addEventListener('click', () => {
+        this.closeModal('modal-reset-password');
+      });
+    }
+
+    const formReset = document.getElementById('form-reset-password');
+    if (formReset) {
+      formReset.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('reset-email').value;
+        const p1 = document.getElementById('reset-new-password').value;
+        const p2 = document.getElementById('reset-confirm-password').value;
+
+        if (p1 !== p2) {
+          this.showToast('Пароли не совпадают. Пожалуйста, проверьте ввод.', 'error');
+          return;
+        }
+
+        try {
+          const user = await authService.resetPasswordByEmail(email, p1);
+          this.closeModal('modal-reset-password');
+          this.showToast(`Пароль успешно обновлён! Добро пожаловать, ${user.name}`);
+          this.checkSessionAndRoute();
+        } catch (err) {
+          this.showToast(err.message, 'error');
+        }
+      });
+    }
+
+    // Вход через ВКонтакте — открытие модального окна выбора профиля
+    const btnVkLogin = document.getElementById('btn-vk-login');
+    if (btnVkLogin) {
+      btnVkLogin.addEventListener('click', () => {
+        this.openModal('modal-vk-auth');
+      });
+    }
+
+    const modalVkClose = document.getElementById('modal-vk-close');
+    if (modalVkClose) {
+      modalVkClose.addEventListener('click', () => {
+        this.closeModal('modal-vk-auth');
+      });
+    }
+
+    // Форма входа Дениса Казакова через VK с паролем
+    const formVkDenis = document.getElementById('form-vk-denis');
+    if (formVkDenis) {
+      formVkDenis.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const pass = document.getElementById('vk-denis-password').value;
+        try {
+          const user = await authService.loginWithVk('468816327', pass);
+          this.closeModal('modal-vk-auth');
+          this.showToast(`Добро пожаловать в кабинет ведущего, ${user.name}!`);
+          this.checkSessionAndRoute();
+        } catch (err) {
+          this.showToast(err.message, 'error');
+        }
+      });
+    }
+
+    // Форма входа участника через VK
+    const formVkParticipant = document.getElementById('form-vk-participant');
+    if (formVkParticipant) {
+      formVkParticipant.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const profile = document.getElementById('vk-input-profile').value;
+        try {
+          const user = await authService.loginWithVk(profile);
+          this.closeModal('modal-vk-auth');
+          this.showToast(`Вход через ВКонтакте выполнен: ${user.name}`);
+          this.checkSessionAndRoute();
+        } catch (err) {
+          this.showToast(err.message, 'error');
+        }
+      });
+    }
 
     // Демо-кнопки
     document.getElementById('btn-demo-patient').addEventListener('click', () => {
@@ -932,9 +1036,17 @@ class App {
     document.getElementById('set-ai-endpoint').value = aiSettings.endpoint || APP_CONFIG.ai.endpoint;
     document.getElementById('set-ai-model').value = aiSettings.model || APP_CONFIG.ai.defaultModel;
     document.getElementById('set-ai-key').value = aiSettings.apiKey || '';
+
+    const adminUser = storage.getUsers().find(u => u.role === 'admin');
+    const elEmail = document.getElementById('set-therapist-email');
+    if (elEmail && adminUser) {
+      elEmail.value = adminUser.email || '';
+    }
+    const elPass = document.getElementById('set-therapist-pass');
+    if (elPass) elPass.value = '';
   }
 
-  saveSettingsForm() {
+  async saveSettingsForm() {
     const endpoint = document.getElementById('set-ai-endpoint').value;
     const model = document.getElementById('set-ai-model').value;
     const apiKey = document.getElementById('set-ai-key').value;
@@ -946,7 +1058,20 @@ class App {
       useMockFallback: true
     });
 
-    this.showToast('Настройки ИИ успешно сохранены!');
+    const email = document.getElementById('set-therapist-email')?.value;
+    const newPass = document.getElementById('set-therapist-pass')?.value;
+
+    if (newPass || email) {
+      try {
+        await authService.changeTherapistPassword(newPass, email);
+        this.showToast('Пароль и email ведущего сохранены!');
+      } catch (err) {
+        this.showToast(err.message, 'error');
+        return;
+      }
+    }
+
+    this.showToast('Настройки успешно сохранены!');
     this.closeModal('modal-settings');
   }
 

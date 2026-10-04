@@ -105,14 +105,20 @@
           <!-- Форма входа участника -->
           <form id="form-login">
             <div class="form-group">
-              <label class="form-label" for="login-name">Ваше имя</label>
-              <input type="text" id="login-name" class="form-input" placeholder="Например, Анна" required autocomplete="username">
-              <div class="form-hint">Имя, под которым вы участвуете в группе</div>
+              <label class="form-label" for="login-name">Ваше имя или Email</label>
+              <input type="text" id="login-name" class="form-input" placeholder="Например, Анна или anna@mail.ru" required autocomplete="username">
+              <div class="form-hint">Имя или почта, указанная при регистрации</div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 6px;">
               <label class="form-label" for="login-password">Пароль</label>
               <input type="password" id="login-password" class="form-input" placeholder="Введите пароль" required autocomplete="current-password">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+              <a href="#" id="link-forgot-password" style="font-size: 0.82rem; color: var(--color-accent); text-decoration: none;">
+                Забыли пароль?
+              </a>
             </div>
 
             <button type="submit" class="btn btn-primary btn-full">
@@ -126,28 +132,46 @@
             </div>
           </form>
 
-          <!-- Выделенный вход для ведущего (Дениса) -->
+          <!-- Выделенный вход для ведущего (Дениса) с защитой паролем -->
           <div id="box-therapist-login" style="display: none; padding: 6px 0;">
             <div style="background: var(--color-primary-soft); padding: 18px; border-radius: var(--radius-md); border: 1px solid #CDE7DD; text-align: center; margin-bottom: 12px;">
               <div style="font-size: 2rem; margin-bottom: 6px;">🩺</div>
               <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--color-primary); margin-bottom: 6px;">
                 Кабинет ведущего группы
               </h2>
-              <p style="font-size: 0.88rem; color: var(--color-text-muted); margin-bottom: 16px;">
-                Вход для Дениса Казакова: доступ ко всей группе, аналитике динамики и ИИ-сводкам
+              <p style="font-size: 0.88rem; color: var(--color-text-muted); margin-bottom: 14px;">
+                Вход для Дениса Казакова. Доступ к группе и записям участников защищён секретным паролем.
               </p>
-              <button type="button" class="btn btn-primary btn-full" id="btn-enter-as-therapist" style="padding: 13px; font-size: 1rem;">
-                Войти как Ведущий (Денис) →
-              </button>
+              <form id="form-therapist-login" style="text-align: left;">
+                <div class="form-group" style="margin-bottom: 6px;">
+                  <label class="form-label" for="therapist-password">Секретный пароль ведущего</label>
+                  <input type="password" id="therapist-password" class="form-input" placeholder="Введите пароль ведущего" required autocomplete="current-password">
+                  <div class="form-hint">Защищает личные дневники пациентов от посторонних глаз</div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 14px;">
+                  <a href="#" id="link-forgot-therapist-password" style="font-size: 0.82rem; color: var(--color-accent); text-decoration: none;">
+                    Забыли пароль?
+                  </a>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full" id="btn-enter-as-therapist" style="padding: 13px; font-size: 1rem;">
+                  Войти как Ведущий (Денис) →
+                </button>
+              </form>
             </div>
           </div>
 
-          <!-- Форма регистрации -->
+          <!-- Форма регистрации с обязательным Email -->
           <form id="form-register" style="display: none;">
             <div class="form-group">
               <label class="form-label" for="reg-name">Ваше имя</label>
               <input type="text" id="reg-name" class="form-input" placeholder="Например, Елена" required autocomplete="username">
               <div class="form-hint">Как ведущему и ассистенту обращаться к вам</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reg-email">Электронная почта (Email)</label>
+              <input type="email" id="reg-email" class="form-input" placeholder="name@example.com" required autocomplete="email">
+              <div class="form-hint">Нужна для входа и безопасного восстановления пароля</div>
             </div>
 
             <div class="form-group">
@@ -639,6 +663,93 @@
   </div>
 
   <!-- ====================================================================
+       МОДАЛЬНОЕ ОКНО: АВТОРИЗАЦИЯ ЧЕРЕЗ VK
+       ==================================================================== -->
+  <div id="modal-vk-auth" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 440px;">
+      <button class="modal-close-btn" id="modal-vk-close">&times;</button>
+      
+      <div class="card-header" style="margin-bottom: 16px; text-align: center;">
+        <div style="font-size: 2rem; margin-bottom: 6px;">🔹</div>
+        <h2 class="card-title">Вход через ВКонтакте</h2>
+        <p class="card-subtitle">Вход для участников и ведущего группы</p>
+      </div>
+
+      <!-- Вход для Дениса Казакова (Ведущий) с защитой паролем -->
+      <div style="background: var(--color-primary-soft); border: 1.5px solid var(--color-primary); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+          <span style="font-size: 1.6rem;">🩺</span>
+          <div>
+            <div style="font-weight: 700; font-size: 0.98rem; color: var(--color-primary);">Денис Казаков (Ведущий)</div>
+            <div style="font-size: 0.78rem; color: var(--color-text-muted);">Профиль: vk.com/id468816327</div>
+          </div>
+        </div>
+        <form id="form-vk-denis">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <input type="password" id="vk-denis-password" class="form-input" placeholder="Введите пароль ведущего" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn btn-primary btn-full btn-sm" id="btn-vk-login-denis" style="padding: 10px; font-weight: 600;">
+            Войти как Денис Казаков (Ведущий) →
+          </button>
+        </form>
+      </div>
+
+      <div class="auth-divider" style="margin: 14px 0;">
+        <span>или для участников группы</span>
+      </div>
+
+      <!-- Вход для участников группы -->
+      <form id="form-vk-participant">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" for="vk-input-profile">Ваше имя или страница VK</label>
+          <input type="text" id="vk-input-profile" class="form-input" placeholder="Например: Анна или vk.com/id..." required>
+          <div class="form-hint">Под этим именем ведущий увидит вас в группе</div>
+        </div>
+        <button type="submit" class="btn btn-vk btn-full" style="padding: 12px;">
+          Войти как участник группы
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       МОДАЛЬНОЕ ОКНО: ВОССТАНОВЛЕНИЕ ПАРОЛЯ ЧЕРЕЗ EMAIL
+       ==================================================================== -->
+  <div id="modal-reset-password" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 440px;">
+      <button class="modal-close-btn" id="modal-reset-close">&times;</button>
+      
+      <div class="card-header" style="margin-bottom: 16px; text-align: center;">
+        <div style="font-size: 2rem; margin-bottom: 6px;">🔑</div>
+        <h2 class="card-title">Восстановление пароля</h2>
+        <p class="card-subtitle">Введите email, указанный при регистрации</p>
+      </div>
+
+      <form id="form-reset-password">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" for="reset-email">Ваш Email</label>
+          <input type="email" id="reset-email" class="form-input" placeholder="name@example.com" required autocomplete="email">
+          <div class="form-hint">На этот адрес зарегистрирован ваш профиль в «Мой ритм»</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" for="reset-new-password">Новый пароль</label>
+          <input type="password" id="reset-new-password" class="form-input" placeholder="Минимум 4 символа" required autocomplete="new-password">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label class="form-label" for="reset-confirm-password">Повторите новый пароль</label>
+          <input type="password" id="reset-confirm-password" class="form-input" placeholder="Повторите пароль" required autocomplete="new-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" style="padding: 12px; font-weight: 600;">
+          Сохранить новый пароль и войти →
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================
        МОДАЛЬНОЕ ОКНО: НАСТРОЙКИ (ДЛЯ ДЕНИСА)
        ==================================================================== -->
   <div id="modal-settings" class="modal-backdrop">
@@ -648,7 +759,7 @@
       <div class="card-header" style="margin-bottom: 14px;">
         <div>
           <h2 class="card-title">Параметры интеграции</h2>
-          <p class="card-subtitle">Подключение anymodel.org, Firebase и экстренные контакты</p>
+          <p class="card-subtitle">Подключение anymodel.org, безопасность и база данных</p>
         </div>
       </div>
 
@@ -671,6 +782,24 @@
           <label class="form-label" for="set-ai-key">API-ключ (anymodel.org)</label>
           <input type="password" id="set-ai-key" class="form-input" placeholder="sk-...">
           <div class="form-hint">Если ключ не указан, автоматически работает встроенный умный эмпатичный симулятор</div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--color-border); margin: 20px 0;">
+
+        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 10px;">
+          Безопасность кабинета ведущего
+        </h3>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="set-therapist-email">Email ведущего (для восстановления доступа)</label>
+          <input type="email" id="set-therapist-email" class="form-input" placeholder="например, therapist@gmail.com">
+          <div class="form-hint">Используется для восстановления пароля кабинета ведущего</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="set-therapist-pass">Сменить секретный пароль ведущего</label>
+          <input type="password" id="set-therapist-pass" class="form-input" placeholder="Введите новый пароль (мин. 4 знака)">
+          <div class="form-hint">Оставьте пустым, чтобы не менять текущий пароль (стартовый: 28246)</div>
         </div>
 
         <hr style="border: none; border-top: 1px solid var(--color-border); margin: 20px 0;">

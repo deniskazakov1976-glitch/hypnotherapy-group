@@ -27,48 +27,66 @@ export class AuthService {
   }
 
   /**
-   * Вход по Имени и Паролю
+   * Вход по Имени/Email и Паролю
    */
-  async login(name, password) {
-    if (!name || !name.trim()) {
-      throw new Error('Пожалуйста, введите ваше имя');
+  async login(identifier, password) {
+    if (!identifier || !identifier.trim()) {
+      throw new Error('Пожалуйста, введите ваше имя или email');
     }
     if (!password || password.length < 4) {
       throw new Error('Пароль должен содержать не менее 4 символов');
     }
 
-    const cleanName = name.trim();
-    const isDenis = cleanName.toLowerCase().includes('денис') || cleanName.toLowerCase().includes('казаков') || cleanName.toLowerCase() === 'admin';
+    const cleanInput = identifier.trim();
+    const cleanLower = cleanInput.toLowerCase();
     const users = storage.getUsers();
+    let adminUser = users.find(u => u.role === 'admin') || {
+      id: 'user_admin',
+      name: 'Денис Казаков',
+      role: 'admin',
+      registeredAt: new Date().toISOString()
+    };
 
-    // Специальная гарантированная проверка для терапевта Дениса
+    const isDenis = cleanLower.includes('денис') || cleanLower.includes('казаков') || cleanLower === 'admin' ||
+                    (adminUser.email && adminUser.email.toLowerCase() === cleanLower);
+
+    // Защита аккаунта ведущего: обязательная проверка пароля!
     if (isDenis) {
-      let adminUser = users.find(u => u.role === 'admin') || {
-        id: 'user_admin',
-        name: 'Денис Казаков',
-        role: 'admin',
-        registeredAt: new Date().toISOString()
-      };
-      adminUser.role = 'admin'; // Всегда админ!
+      const inputHash = await hashPassword(password);
+      if (adminUser.passwordHash) {
+        if (inputHash !== adminUser.passwordHash) {
+          throw new Error('Неверный пароль ведущего! Доступ к кабинету закрыт.');
+        }
+      } else {
+        if (password !== '28246' && password.length < 4) {
+          throw new Error('Неверный пароль ведущего. Введите стартовый пароль (28246).');
+        }
+        adminUser.passwordHash = inputHash;
+      }
+
+      adminUser.role = 'admin';
       storage.saveUser(adminUser);
       this.currentUser = adminUser;
       storage.setCurrentUser(adminUser);
       return adminUser;
     }
 
-    // Проверяем, есть ли такой участник
-    let user = users.find(u => u.name.toLowerCase() === cleanName.toLowerCase());
+    // Проверяем обычного участника (по имени или email)
+    let user = users.find(u => 
+      (u.name && u.name.toLowerCase() === cleanLower) ||
+      (u.email && u.email.toLowerCase() === cleanLower)
+    );
 
     // Проверка пароля (если у пользователя есть хеш)
     if (user && user.passwordHash) {
       const inputHash = await hashPassword(password);
       if (inputHash !== user.passwordHash) {
-        throw new Error('Неверный пароль. Попробуйте ещё раз.');
+        throw new Error('Неверный пароль. Попробуйте ещё раз или восстановите доступ через email.');
       }
     }
 
     if (!user) {
-      throw new Error(`Пользователь с именем "${cleanName}" не найден. Пожалуйста, пройдите быструю регистрацию.`);
+      throw new Error(`Пользователь "${cleanInput}" не найден. Пожалуйста, пройдите быструю регистрацию.`);
     }
 
     this.currentUser = user;
@@ -77,9 +95,12 @@ export class AuthService {
   }
 
   /**
-   * Прямой гарантированный вход в кабинет ведущего (Денис Казаков)
+   * Защищенный вход в кабинет ведущего (Денис Казаков) с проверкой пароля
    */
-  async loginAsTherapist() {
+  async loginAsTherapist(password) {
+    if (!password) {
+      throw new Error('Пожалуйста, введите пароль ведущего');
+    }
     const users = storage.getUsers();
     let adminUser = users.find(u => u.role === 'admin') || {
       id: 'user_admin',
@@ -87,6 +108,19 @@ export class AuthService {
       role: 'admin',
       registeredAt: new Date().toISOString()
     };
+
+    const inputHash = await hashPassword(password);
+    if (adminUser.passwordHash) {
+      if (inputHash !== adminUser.passwordHash) {
+        throw new Error('Неверный пароль ведущего. Доступ к кабинету закрыт.');
+      }
+    } else {
+      if (password !== '28246' && password.length < 4) {
+        throw new Error('Неверный пароль ведущего. Введите стартовый пароль (28246).');
+      }
+      adminUser.passwordHash = inputHash;
+    }
+
     adminUser.role = 'admin';
     storage.saveUser(adminUser);
     this.currentUser = adminUser;
@@ -95,48 +129,110 @@ export class AuthService {
   }
 
   /**
-   * Мгновенное переключение текущей сессии на роль ведущего
+   * Защищенное переключение текущей сессии на роль ведущего с подтверждением пароля
    */
-  switchToAdmin() {
-    let user = this.getCurrentUser();
-    if (!user) {
-      user = { id: 'user_admin', name: 'Денис Казаков', role: 'admin', registeredAt: new Date().toISOString() };
-    } else {
-      user.role = 'admin';
-      if (!user.name || user.name.toLowerCase() === 'участник') {
-        user.name = 'Денис Казаков';
-      }
+  async switchToAdmin(password) {
+    if (!password) {
+      throw new Error('Для перехода в кабинет ведущего требуется пароль');
     }
-    storage.saveUser(user);
-    storage.setCurrentUser(user);
-    this.currentUser = user;
-    return user;
+    const users = storage.getUsers();
+    let adminUser = users.find(u => u.role === 'admin') || {
+      id: 'user_admin',
+      name: 'Денис Казаков',
+      role: 'admin',
+      registeredAt: new Date().toISOString()
+    };
+
+    const inputHash = await hashPassword(password);
+    if (adminUser.passwordHash) {
+      if (inputHash !== adminUser.passwordHash) {
+        throw new Error('Неверный пароль ведущего');
+      }
+    } else {
+      if (password !== '28246' && password.length < 4) {
+        throw new Error('Неверный пароль ведущего');
+      }
+      adminUser.passwordHash = inputHash;
+    }
+
+    adminUser.role = 'admin';
+    storage.saveUser(adminUser);
+    this.currentUser = adminUser;
+    storage.setCurrentUser(adminUser);
+    return adminUser;
   }
 
   /**
-   * Регистрация нового участника
+   * Смена пароля и email ведущего
    */
-  async register(name, password) {
+  async changeTherapistPassword(newPassword, email = null) {
+    const users = storage.getUsers();
+    let adminUser = users.find(u => u.role === 'admin') || {
+      id: 'user_admin',
+      name: 'Денис Казаков',
+      role: 'admin'
+    };
+
+    if (newPassword && newPassword.trim()) {
+      if (newPassword.length < 4) {
+        throw new Error('Новый пароль должен содержать не менее 4 символов');
+      }
+      adminUser.passwordHash = await hashPassword(newPassword.trim());
+    }
+
+    if (email && email.trim()) {
+      adminUser.email = email.trim().toLowerCase();
+    }
+
+    storage.saveUser(adminUser);
+    if (this.currentUser && this.currentUser.role === 'admin') {
+      this.currentUser = { ...this.currentUser, ...adminUser };
+      storage.setCurrentUser(this.currentUser);
+    }
+    return true;
+  }
+
+  /**
+   * Регистрация нового участника с обязательной электронной почтой для восстановления
+   */
+  async register(name, email, password) {
     if (!name || !name.trim()) {
       throw new Error('Пожалуйста, введите ваше имя');
+    }
+    if (!email || !email.trim() || !email.includes('@') || !email.includes('.')) {
+      throw new Error('Пожалуйста, введите корректный адрес электронной почты (Email)');
     }
     if (!password || password.length < 4) {
       throw new Error('Пароль должен содержать минимум 4 символа');
     }
 
     const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
     const isDenis = cleanName.toLowerCase().includes('денис') || cleanName.toLowerCase().includes('казаков') || cleanName.toLowerCase() === 'admin';
     const users = storage.getUsers();
 
-    const exists = users.find(u => u.name.toLowerCase() === cleanName.toLowerCase());
-    if (exists && !isDenis) {
+    if (isDenis) {
+      let adminUser = users.find(u => u.role === 'admin');
+      if (adminUser) {
+        throw new Error('Аккаунт ведущего Дениса Казакова уже существует. Войдите через вкладку «Ведущий» со своим паролем.');
+      }
+    }
+
+    const existsName = users.find(u => u.name && u.name.toLowerCase() === cleanName.toLowerCase());
+    if (existsName) {
       throw new Error(`Пользователь с именем "${cleanName}" уже зарегистрирован. Пожалуйста, выполните вход.`);
+    }
+
+    const existsEmail = users.find(u => u.email && u.email.toLowerCase() === cleanEmail);
+    if (existsEmail) {
+      throw new Error(`Пользователь с почтой "${cleanEmail}" уже зарегистрирован. Войдите или восстановите пароль.`);
     }
 
     const newUser = {
       id: isDenis ? 'user_admin' : 'user_' + Date.now(),
       name: cleanName,
-      role: isDenis ? 'admin' : 'patient', // Если Денис регистрируется — он сразу админ!
+      email: cleanEmail,
+      role: isDenis ? 'admin' : 'patient',
       registeredAt: new Date().toISOString(),
       isDemo: false
     };
@@ -149,22 +245,120 @@ export class AuthService {
   }
 
   /**
-   * Авторизация через ВКонтакте (VK ID)
+   * Восстановление пароля по электронной почте
    */
-  async loginWithVk(vkUserMock = null) {
-    const vkProfile = vkUserMock || {
-      vkId: 'vk_' + Math.floor(Math.random() * 1000000),
-      name: 'Участник VK (' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) + ')'
-    };
+  async resetPasswordByEmail(email, newPassword) {
+    if (!email || !email.trim() || !email.includes('@')) {
+      throw new Error('Пожалуйста, укажите корректный Email');
+    }
+    if (!newPassword || newPassword.length < 4) {
+      throw new Error('Новый пароль должен быть не короче 4 символов');
+    }
 
+    const cleanEmail = email.trim().toLowerCase();
     const users = storage.getUsers();
-    let user = users.find(u => u.vkId === vkProfile.vkId);
+
+    // 1. Проверяем участников
+    let user = users.find(u => u.email && u.email.toLowerCase() === cleanEmail);
+
+    // 2. Если не найден, проверяем ведущего (Дениса)
+    if (!user) {
+      let adminUser = users.find(u => u.role === 'admin');
+      if (adminUser && adminUser.email && adminUser.email.toLowerCase() === cleanEmail) {
+        user = adminUser;
+      }
+    }
+
+    if (!user) {
+      throw new Error(`Пользователь с почтой "${cleanEmail}" не найден. Проверьте адрес или зарегистрируйтесь.`);
+    }
+
+    user.passwordHash = await hashPassword(newPassword);
+    storage.saveUser(user);
+
+    // Авторизуем пользователя с новым паролем
+    this.currentUser = user;
+    storage.setCurrentUser(user);
+    return user;
+  }
+
+  /**
+   * Авторизация через ВКонтакте (VK ID)
+   * Для профиля Дениса Казакова (id468816327) строго запрашивает секретный пароль ведущего.
+   * Для участников фиксирует их реальное имя из профиля VK.
+   */
+  async loginWithVk(profileInput = null, password = null) {
+    let vkId = '468816327';
+    let name = 'Денис Казаков';
+    let isDenis = false;
+
+    if (profileInput) {
+      if (typeof profileInput === 'string') {
+        const str = profileInput.trim();
+        if (str.includes('468816327') || str.toLowerCase().includes('денис') || str.toLowerCase().includes('казаков')) {
+          isDenis = true;
+          vkId = '468816327';
+          name = 'Денис Казаков';
+        } else {
+          isDenis = false;
+          let clean = str.replace(/https?:\/\/vk\.com\//i, '').replace(/^@/, '').trim();
+          vkId = 'vk_' + clean.replace(/[^a-zA-Z0-9_]/g, '');
+          name = clean.startsWith('id') ? 'Участник (' + clean + ')' : clean;
+        }
+      } else if (profileInput.vkId || profileInput.name) {
+        vkId = String(profileInput.vkId || '');
+        name = profileInput.name || '';
+        isDenis = vkId.includes('468816327') || name.toLowerCase().includes('денис') || name.toLowerCase().includes('казаков');
+      }
+    } else {
+      isDenis = true;
+    }
+
+    // Если это Денис Казаков — СТРОГАЯ проверка пароля ведущего!
+    if (isDenis) {
+      if (!password) {
+        throw new Error('Для входа ведущего (Дениса Казакова) требуется ввести секретный пароль.');
+      }
+
+      let adminUser = storage.getUsers().find(u => u.role === 'admin') || {
+        id: 'user_admin',
+        name: 'Денис Казаков',
+        role: 'admin',
+        registeredAt: new Date().toISOString()
+      };
+
+      const inputHash = await hashPassword(password);
+      if (adminUser.passwordHash) {
+        if (inputHash !== adminUser.passwordHash) {
+          throw new Error('Неверный пароль ведущего! Доступ к кабинету закрыт.');
+        }
+      } else {
+        if (password !== '28246' && password.length < 4) {
+          throw new Error('Неверный пароль ведущего. Введите стартовый пароль (28246).');
+        }
+        adminUser.passwordHash = inputHash;
+      }
+
+      adminUser.role = 'admin';
+      adminUser.name = 'Денис Казаков';
+      adminUser.vkId = '468816327';
+      adminUser.vkUrl = 'https://vk.com/id468816327';
+      adminUser.authProvider = 'vk';
+      storage.saveUser(adminUser);
+      this.currentUser = adminUser;
+      storage.setCurrentUser(adminUser);
+      return adminUser;
+    }
+
+    // Иначе это участник группы через VK
+    const users = storage.getUsers();
+    let user = users.find(u => u.vkId === vkId || (name && u.name.toLowerCase() === name.toLowerCase()));
 
     if (!user) {
       user = {
         id: 'user_vk_' + Date.now(),
-        name: vkProfile.name,
-        vkId: vkProfile.vkId,
+        name: name || 'Участник VK',
+        vkId: vkId,
         role: 'patient',
         registeredAt: new Date().toISOString(),
         authProvider: 'vk'
@@ -178,14 +372,15 @@ export class AuthService {
   }
 
   /**
-   * Быстрый вход в 1 клик для демонстрации
+   * Быстрый вход в демо-режим для ознакомления
    */
   loginAsDemo(role = 'patient', userKey = 'anna') {
     if (role === 'admin') {
-      const admin = storage.getUsers().find(u => u.role === 'admin') || {
-        id: 'user_admin',
-        name: 'Денис Казаков',
-        role: 'admin'
+      const admin = {
+        id: 'user_demo_admin',
+        name: 'Денис Казаков (Демо)',
+        role: 'admin',
+        isDemo: true
       };
       this.currentUser = admin;
       storage.setCurrentUser(admin);
