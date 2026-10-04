@@ -19,9 +19,10 @@ const INITIAL_DEMO_USERS = [
   {
     id: 'user_admin',
     name: 'Денис Казаков',
+    email: 'denis_kazakov@mail.ru',
     role: 'admin',
     registeredAt: '2026-09-20T10:00:00Z',
-    isDemo: true
+    isDemo: false
   },
   {
     id: 'user_anna',

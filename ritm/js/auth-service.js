@@ -39,32 +39,32 @@ export class AuthService {
 
     const cleanInput = identifier.trim();
     const cleanLower = cleanInput.toLowerCase();
-    const users = storage.getUsers();
-    let adminUser = users.find(u => u.role === 'admin') || {
-      id: 'user_admin',
-      name: 'Денис Казаков',
-      role: 'admin',
-      registeredAt: new Date().toISOString()
-    };
+    const cleanPass = password.trim();
 
-    const isDenis = cleanLower.includes('денис') || cleanLower.includes('казаков') || cleanLower === 'admin' ||
-                    (adminUser.email && adminUser.email.toLowerCase() === cleanLower);
+    // 1. Прошитый вход администратора (Денис Казаков)
+    const isDenisEmail = cleanLower === 'denis_kazakov@mail.ru';
+    const isDenisName = cleanLower === 'денис' || cleanLower === 'денис казаков' || cleanLower === 'admin' || cleanLower.includes('казаков');
 
-    // Защита аккаунта ведущего: обязательная проверка пароля!
-    if (isDenis) {
-      const inputHash = await hashPassword(password);
-      if (adminUser.passwordHash) {
-        if (inputHash !== adminUser.passwordHash) {
-          throw new Error('Неверный пароль ведущего! Доступ к кабинету закрыт.');
-        }
-      } else {
-        if (password !== '28246' && password.length < 4) {
-          throw new Error('Неверный пароль ведущего. Введите стартовый пароль (28246).');
-        }
-        adminUser.passwordHash = inputHash;
+    if (isDenisEmail || isDenisName) {
+      if (cleanPass !== '127554') {
+        throw new Error('Неверный пароль. Попробуйте ещё раз.');
       }
 
+      const users = storage.getUsers();
+      let adminUser = users.find(u => u.role === 'admin') || {
+        id: 'user_admin',
+        name: 'Денис Казаков',
+        email: 'denis_kazakov@mail.ru',
+        role: 'admin',
+        registeredAt: new Date().toISOString()
+      };
+
       adminUser.role = 'admin';
+      adminUser.name = 'Денис Казаков';
+      adminUser.email = 'denis_kazakov@mail.ru';
+      adminUser.vkId = '468816327';
+      adminUser.vkUrl = 'https://vk.com/id468816327';
+      adminUser.passwordHash = await hashPassword('127554');
       storage.saveUser(adminUser);
       this.currentUser = adminUser;
       storage.setCurrentUser(adminUser);
@@ -208,15 +208,14 @@ export class AuthService {
 
     const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
-    const isDenis = cleanName.toLowerCase().includes('денис') || cleanName.toLowerCase().includes('казаков') || cleanName.toLowerCase() === 'admin';
-    const users = storage.getUsers();
+    const cleanLowerName = cleanName.toLowerCase();
 
-    if (isDenis) {
-      let adminUser = users.find(u => u.role === 'admin');
-      if (adminUser) {
-        throw new Error('Аккаунт ведущего Дениса Казакова уже существует. Войдите через вкладку «Ведущий» со своим паролем.');
-      }
+    // Защита: нельзя зарегистрироваться под данными ведущего
+    if (cleanEmail === 'denis_kazakov@mail.ru' || cleanLowerName.includes('денис') || cleanLowerName.includes('казаков') || cleanLowerName === 'admin') {
+      throw new Error('Этот логин или email зарезервирован. Пожалуйста, выполните вход.');
     }
+
+    const users = storage.getUsers();
 
     const existsName = users.find(u => u.name && u.name.toLowerCase() === cleanName.toLowerCase());
     if (existsName) {

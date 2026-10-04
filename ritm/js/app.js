@@ -83,7 +83,6 @@ class App {
     const roleEl = document.getElementById('user-display-role');
     const logoutBtn = document.getElementById('btn-logout');
     const settingsBtn = document.getElementById('btn-admin-settings');
-    const switchAdminBtn = document.getElementById('btn-switch-to-admin');
 
     if (user) {
       navBox.style.display = 'flex';
@@ -94,18 +93,15 @@ class App {
         roleEl.textContent = 'Ведущий';
         roleEl.className = 'role-tag admin';
         settingsBtn.style.display = 'inline-flex';
-        if (switchAdminBtn) switchAdminBtn.style.display = 'none';
       } else {
         roleEl.textContent = 'Участник';
         roleEl.className = 'role-tag patient';
         settingsBtn.style.display = 'none';
-        if (switchAdminBtn) switchAdminBtn.style.display = 'inline-flex';
       }
     } else {
       navBox.style.display = 'none';
       logoutBtn.style.display = 'none';
       settingsBtn.style.display = 'none';
-      if (switchAdminBtn) switchAdminBtn.style.display = 'none';
     }
   }
 
@@ -113,120 +109,66 @@ class App {
   // ПРИВЯЗКА СОБЫТИЙ
   // =========================================================================
   bindEvents() {
-    // Вкладки авторизации (Участник / Регистрация / Ведущий)
+    // Вкладки авторизации (Вход / Регистрация)
     const tabLogin = document.getElementById('tab-login-btn');
     const tabRegister = document.getElementById('tab-register-btn');
-    const tabTherapist = document.getElementById('tab-therapist-btn');
     const formLogin = document.getElementById('form-login');
     const formRegister = document.getElementById('form-register');
-    const boxTherapist = document.getElementById('box-therapist-login');
 
     const switchAuthTab = (activeTab) => {
-      [tabLogin, tabRegister, tabTherapist].forEach(t => t && t.classList.remove('active'));
+      [tabLogin, tabRegister].forEach(t => t && t.classList.remove('active'));
       if (formLogin) formLogin.style.display = 'none';
       if (formRegister) formRegister.style.display = 'none';
-      if (boxTherapist) boxTherapist.style.display = 'none';
 
       if (activeTab === 'login') {
-        tabLogin.classList.add('active');
-        formLogin.style.display = 'block';
+        if (tabLogin) tabLogin.classList.add('active');
+        if (formLogin) formLogin.style.display = 'block';
       } else if (activeTab === 'register') {
-        tabRegister.classList.add('active');
-        formRegister.style.display = 'block';
-      } else if (activeTab === 'therapist') {
-        tabTherapist.classList.add('active');
-        boxTherapist.style.display = 'block';
+        if (tabRegister) tabRegister.classList.add('active');
+        if (formRegister) formRegister.style.display = 'block';
       }
     };
 
     if (tabLogin) tabLogin.addEventListener('click', () => switchAuthTab('login'));
     if (tabRegister) tabRegister.addEventListener('click', () => switchAuthTab('register'));
-    if (tabTherapist) tabTherapist.addEventListener('click', () => switchAuthTab('therapist'));
 
-    const linkGotoTherapist = document.getElementById('link-goto-therapist');
-    if (linkGotoTherapist) linkGotoTherapist.addEventListener('click', (e) => {
-      e.preventDefault();
-      switchAuthTab('therapist');
-    });
-
-    // Форма входа ведущего с паролем
-    const formTherapist = document.getElementById('form-therapist-login');
-    if (formTherapist) {
-      formTherapist.addEventListener('submit', async (e) => {
+    // Отправка формы входа (по имени или email)
+    if (formLogin) {
+      formLogin.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const pass = document.getElementById('therapist-password').value;
+        const identifier = document.getElementById('login-name').value;
+        const pass = document.getElementById('login-password').value;
         try {
-          await authService.loginAsTherapist(pass);
-          this.showToast('Добро пожаловать в кабинет ведущего, Денис!');
+          const user = await authService.login(identifier, pass);
+          this.showToast(`Добро пожаловать, ${user.name}!`);
           this.checkSessionAndRoute();
         } catch (err) {
           this.showToast(err.message, 'error');
         }
       });
     }
-
-    // Кнопка переключения на ведущего в шапке (с подтверждением пароля)
-    const btnSwitchAdmin = document.getElementById('btn-switch-to-admin');
-    if (btnSwitchAdmin) {
-      btnSwitchAdmin.addEventListener('click', async () => {
-        const cur = authService.getCurrentUser();
-        if (cur && cur.role === 'admin') {
-          this.checkSessionAndRoute();
-          return;
-        }
-        const pass = prompt('Для перехода в кабинет ведущего введите секретный пароль:');
-        if (!pass) return;
-        try {
-          await authService.switchToAdmin(pass);
-          this.showToast('Вы переключены в кабинет ведущего (Денис Казаков)!');
-          this.checkSessionAndRoute();
-        } catch (err) {
-          this.showToast(err.message, 'error');
-        }
-      });
-    }
-
-    // Отправка формы входа участника (по имени или email)
-    formLogin.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const identifier = document.getElementById('login-name').value;
-      const pass = document.getElementById('login-password').value;
-      try {
-        const user = await authService.login(identifier, pass);
-        this.showToast(`Добро пожаловать, ${user.name}!`);
-        this.checkSessionAndRoute();
-      } catch (err) {
-        this.showToast(err.message, 'error');
-      }
-    });
 
     // Отправка формы регистрации (Имя + Email + Пароль)
-    formRegister.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('reg-name').value;
-      const email = document.getElementById('reg-email').value;
-      const pass = document.getElementById('reg-password').value;
-      try {
-        await authService.register(name, email, pass);
-        this.showToast('Регистрация успешна! Заполните вводную анкету.');
-        this.checkSessionAndRoute();
-      } catch (err) {
-        this.showToast(err.message, 'error');
-      }
-    });
+    if (formRegister) {
+      formRegister.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('reg-name').value;
+        const email = document.getElementById('reg-email').value;
+        const pass = document.getElementById('reg-password').value;
+        try {
+          await authService.register(name, email, pass);
+          this.showToast('Регистрация успешна! Заполните вводную анкету.');
+          this.checkSessionAndRoute();
+        } catch (err) {
+          this.showToast(err.message, 'error');
+        }
+      });
+    }
 
     // Восстановление пароля по email
     const linkForgot = document.getElementById('link-forgot-password');
     if (linkForgot) {
       linkForgot.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.openModal('modal-reset-password');
-      });
-    }
-
-    const linkForgotTherapist = document.getElementById('link-forgot-therapist-password');
-    if (linkForgotTherapist) {
-      linkForgotTherapist.addEventListener('click', (e) => {
         e.preventDefault();
         this.openModal('modal-reset-password');
       });
@@ -278,23 +220,6 @@ class App {
       });
     }
 
-    // Форма входа Дениса Казакова через VK с паролем
-    const formVkDenis = document.getElementById('form-vk-denis');
-    if (formVkDenis) {
-      formVkDenis.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const pass = document.getElementById('vk-denis-password').value;
-        try {
-          const user = await authService.loginWithVk('468816327', pass);
-          this.closeModal('modal-vk-auth');
-          this.showToast(`Добро пожаловать в кабинет ведущего, ${user.name}!`);
-          this.checkSessionAndRoute();
-        } catch (err) {
-          this.showToast(err.message, 'error');
-        }
-      });
-    }
-
     // Форма входа участника через VK
     const formVkParticipant = document.getElementById('form-vk-participant');
     if (formVkParticipant) {
@@ -311,19 +236,6 @@ class App {
         }
       });
     }
-
-    // Демо-кнопки
-    document.getElementById('btn-demo-patient').addEventListener('click', () => {
-      const user = authService.loginAsDemo('patient', 'anna');
-      this.showToast(`Вход в демо-профиль: ${user.name}`);
-      this.checkSessionAndRoute();
-    });
-
-    document.getElementById('btn-demo-therapist').addEventListener('click', () => {
-      const user = authService.loginAsDemo('admin');
-      this.showToast(`Вход в кабинет терапевта: ${user.name}`);
-      this.checkSessionAndRoute();
-    });
 
     // Выход
     document.getElementById('btn-logout').addEventListener('click', () => {
