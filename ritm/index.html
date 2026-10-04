@@ -47,6 +47,9 @@
           <span id="user-display-name">Участник</span>
           <span id="user-display-role" class="role-tag patient">Участник</span>
         </div>
+        <button id="btn-switch-to-admin" class="btn btn-outline btn-sm" style="display: none; border-color: var(--color-accent); color: var(--color-primary); font-weight: 600;" title="Открыть кабинет ведущего">
+          🩺 Кабинет ведущего
+        </button>
         <button id="btn-admin-settings" class="btn btn-outline btn-sm" style="display: none;" title="Настройки API и Firebase">
           ⚙️ Настройки
         </button>
@@ -93,12 +96,13 @@
             <p class="card-subtitle">Пространство бережного наблюдения за вашей динамикой между сессиями</p>
           </div>
 
-          <div class="auth-tabs">
-            <button class="auth-tab active" id="tab-login-btn">Вход</button>
+          <div class="auth-tabs" style="grid-template-columns: 1fr 1fr 1fr;">
+            <button class="auth-tab active" id="tab-login-btn">Участник</button>
             <button class="auth-tab" id="tab-register-btn">Регистрация</button>
+            <button class="auth-tab" id="tab-therapist-btn" style="color: var(--color-primary); font-weight: 700;">🩺 Ведущий</button>
           </div>
 
-          <!-- Форма входа -->
+          <!-- Форма входа участника -->
           <form id="form-login">
             <div class="form-group">
               <label class="form-label" for="login-name">Ваше имя</label>
@@ -114,7 +118,29 @@
             <button type="submit" class="btn btn-primary btn-full">
               Войти в дневник
             </button>
+
+            <div style="text-align: center; margin-top: 14px;">
+              <a href="#" id="link-goto-therapist" style="font-size: 0.85rem; color: var(--color-accent); font-weight: 600; text-decoration: none;">
+                🩺 Вы ведущий (Денис)? Войти в кабинет ведущего →
+              </a>
+            </div>
           </form>
+
+          <!-- Выделенный вход для ведущего (Дениса) -->
+          <div id="box-therapist-login" style="display: none; padding: 6px 0;">
+            <div style="background: var(--color-primary-soft); padding: 18px; border-radius: var(--radius-md); border: 1px solid #CDE7DD; text-align: center; margin-bottom: 12px;">
+              <div style="font-size: 2rem; margin-bottom: 6px;">🩺</div>
+              <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--color-primary); margin-bottom: 6px;">
+                Кабинет ведущего группы
+              </h2>
+              <p style="font-size: 0.88rem; color: var(--color-text-muted); margin-bottom: 16px;">
+                Вход для Дениса Казакова: доступ ко всей группе, аналитике динамики и ИИ-сводкам
+              </p>
+              <button type="button" class="btn btn-primary btn-full" id="btn-enter-as-therapist" style="padding: 13px; font-size: 1rem;">
+                Войти как Ведущий (Денис) →
+              </button>
+            </div>
+          </div>
 
           <!-- Форма регистрации -->
           <form id="form-register" style="display: none;">

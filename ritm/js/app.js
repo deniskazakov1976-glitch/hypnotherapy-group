@@ -43,7 +43,17 @@ class App {
   }
 
   checkSessionAndRoute() {
-    const user = authService.getCurrentUser();
+    let user = authService.getCurrentUser();
+
+    // Если в сессии Денис Казаков, но роль случайно осталась patient — гарантированно повышаем до admin
+    if (user && (user.name.toLowerCase().includes('денис') || user.name.toLowerCase().includes('казаков') || user.name.toLowerCase() === 'admin')) {
+      if (user.role !== 'admin') {
+        user.role = 'admin';
+        storage.saveUser(user);
+        storage.setCurrentUser(user);
+      }
+    }
+
     this.updateHeaderNav(user);
 
     if (!user) {
@@ -57,7 +67,7 @@ class App {
       return;
     }
 
-    // Пользователь — пациент: проверяем, заполнена ли первичная анкета
+    // Пользователь — участник: проверяем, заполнена ли первичная анкета
     const survey = storage.getSurveyByUserId(user.id);
     if (!survey) {
       this.showScreen('screen-initial-survey');
@@ -73,6 +83,7 @@ class App {
     const roleEl = document.getElementById('user-display-role');
     const logoutBtn = document.getElementById('btn-logout');
     const settingsBtn = document.getElementById('btn-admin-settings');
+    const switchAdminBtn = document.getElementById('btn-switch-to-admin');
 
     if (user) {
       navBox.style.display = 'flex';
@@ -83,15 +94,18 @@ class App {
         roleEl.textContent = 'Ведущий';
         roleEl.className = 'role-tag admin';
         settingsBtn.style.display = 'inline-flex';
+        if (switchAdminBtn) switchAdminBtn.style.display = 'none';
       } else {
         roleEl.textContent = 'Участник';
         roleEl.className = 'role-tag patient';
         settingsBtn.style.display = 'none';
+        if (switchAdminBtn) switchAdminBtn.style.display = 'inline-flex';
       }
     } else {
       navBox.style.display = 'none';
       logoutBtn.style.display = 'none';
       settingsBtn.style.display = 'none';
+      if (switchAdminBtn) switchAdminBtn.style.display = 'none';
     }
   }
 
@@ -99,24 +113,60 @@ class App {
   // ПРИВЯЗКА СОБЫТИЙ
   // =========================================================================
   bindEvents() {
-    // Вкладки авторизации (Вход / Регистрация)
+    // Вкладки авторизации (Участник / Регистрация / Ведущий)
     const tabLogin = document.getElementById('tab-login-btn');
     const tabRegister = document.getElementById('tab-register-btn');
+    const tabTherapist = document.getElementById('tab-therapist-btn');
     const formLogin = document.getElementById('form-login');
     const formRegister = document.getElementById('form-register');
+    const boxTherapist = document.getElementById('box-therapist-login');
 
-    tabLogin.addEventListener('click', () => {
-      tabLogin.classList.add('active');
-      tabRegister.classList.remove('active');
-      formLogin.style.display = 'block';
-      formRegister.style.display = 'none';
+    const switchAuthTab = (activeTab) => {
+      [tabLogin, tabRegister, tabTherapist].forEach(t => t && t.classList.remove('active'));
+      if (formLogin) formLogin.style.display = 'none';
+      if (formRegister) formRegister.style.display = 'none';
+      if (boxTherapist) boxTherapist.style.display = 'none';
+
+      if (activeTab === 'login') {
+        tabLogin.classList.add('active');
+        formLogin.style.display = 'block';
+      } else if (activeTab === 'register') {
+        tabRegister.classList.add('active');
+        formRegister.style.display = 'block';
+      } else if (activeTab === 'therapist') {
+        tabTherapist.classList.add('active');
+        boxTherapist.style.display = 'block';
+      }
+    };
+
+    if (tabLogin) tabLogin.addEventListener('click', () => switchAuthTab('login'));
+    if (tabRegister) tabRegister.addEventListener('click', () => switchAuthTab('register'));
+    if (tabTherapist) tabTherapist.addEventListener('click', () => switchAuthTab('therapist'));
+
+    const linkGotoTherapist = document.getElementById('link-goto-therapist');
+    if (linkGotoTherapist) linkGotoTherapist.addEventListener('click', (e) => {
+      e.preventDefault();
+      switchAuthTab('therapist');
     });
 
-    tabRegister.addEventListener('click', () => {
-      tabRegister.classList.add('active');
-      tabLogin.classList.remove('active');
-      formRegister.style.display = 'block';
-      formLogin.style.display = 'none';
+    // Кнопка быстрого входа ведущего
+    const btnEnterTherapist = document.getElementById('btn-enter-as-therapist');
+    if (btnEnterTherapist) btnEnterTherapist.addEventListener('click', async () => {
+      try {
+        await authService.loginAsTherapist();
+        this.showToast('Добро пожаловать в кабинет ведущего, Денис!');
+        this.checkSessionAndRoute();
+      } catch (err) {
+        this.showToast('Ошибка входа ведущего: ' + err.message, 'error');
+      }
+    });
+
+    // Кнопка переключения на ведущего в шапке (если пользователь вошел как участник)
+    const btnSwitchAdmin = document.getElementById('btn-switch-to-admin');
+    if (btnSwitchAdmin) btnSwitchAdmin.addEventListener('click', () => {
+      authService.switchToAdmin();
+      this.showToast('Вы переключены в кабинет ведущего (Денис Казаков)!');
+      this.checkSessionAndRoute();
     });
 
     // Отправка формы входа

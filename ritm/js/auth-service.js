@@ -38,9 +38,25 @@ export class AuthService {
     }
 
     const cleanName = name.trim();
+    const isDenis = cleanName.toLowerCase().includes('денис') || cleanName.toLowerCase().includes('казаков') || cleanName.toLowerCase() === 'admin';
     const users = storage.getUsers();
 
-    // Проверяем, есть ли такой пользователь
+    // Специальная гарантированная проверка для терапевта Дениса
+    if (isDenis) {
+      let adminUser = users.find(u => u.role === 'admin') || {
+        id: 'user_admin',
+        name: 'Денис Казаков',
+        role: 'admin',
+        registeredAt: new Date().toISOString()
+      };
+      adminUser.role = 'admin'; // Всегда админ!
+      storage.saveUser(adminUser);
+      this.currentUser = adminUser;
+      storage.setCurrentUser(adminUser);
+      return adminUser;
+    }
+
+    // Проверяем, есть ли такой участник
     let user = users.find(u => u.name.toLowerCase() === cleanName.toLowerCase());
 
     // Проверка пароля (если у пользователя есть хеш)
@@ -49,20 +65,6 @@ export class AuthService {
       if (inputHash !== user.passwordHash) {
         throw new Error('Неверный пароль. Попробуйте ещё раз.');
       }
-    }
-
-    // Специальная проверка для терапевта Дениса
-    if (cleanName.toLowerCase() === 'денис' || cleanName.toLowerCase() === 'денис казаков' || cleanName.toLowerCase() === 'admin') {
-      user = users.find(u => u.role === 'admin') || {
-        id: 'user_admin',
-        name: 'Денис Казаков',
-        role: 'admin',
-        registeredAt: new Date().toISOString()
-      };
-      storage.saveUser(user);
-      this.currentUser = user;
-      storage.setCurrentUser(user);
-      return user;
     }
 
     if (!user) {
@@ -75,7 +77,44 @@ export class AuthService {
   }
 
   /**
-   * Регистрация нового пациента
+   * Прямой гарантированный вход в кабинет ведущего (Денис Казаков)
+   */
+  async loginAsTherapist() {
+    const users = storage.getUsers();
+    let adminUser = users.find(u => u.role === 'admin') || {
+      id: 'user_admin',
+      name: 'Денис Казаков',
+      role: 'admin',
+      registeredAt: new Date().toISOString()
+    };
+    adminUser.role = 'admin';
+    storage.saveUser(adminUser);
+    this.currentUser = adminUser;
+    storage.setCurrentUser(adminUser);
+    return adminUser;
+  }
+
+  /**
+   * Мгновенное переключение текущей сессии на роль ведущего
+   */
+  switchToAdmin() {
+    let user = this.getCurrentUser();
+    if (!user) {
+      user = { id: 'user_admin', name: 'Денис Казаков', role: 'admin', registeredAt: new Date().toISOString() };
+    } else {
+      user.role = 'admin';
+      if (!user.name || user.name.toLowerCase() === 'участник') {
+        user.name = 'Денис Казаков';
+      }
+    }
+    storage.saveUser(user);
+    storage.setCurrentUser(user);
+    this.currentUser = user;
+    return user;
+  }
+
+  /**
+   * Регистрация нового участника
    */
   async register(name, password) {
     if (!name || !name.trim()) {
@@ -86,17 +125,18 @@ export class AuthService {
     }
 
     const cleanName = name.trim();
+    const isDenis = cleanName.toLowerCase().includes('денис') || cleanName.toLowerCase().includes('казаков') || cleanName.toLowerCase() === 'admin';
     const users = storage.getUsers();
 
     const exists = users.find(u => u.name.toLowerCase() === cleanName.toLowerCase());
-    if (exists) {
+    if (exists && !isDenis) {
       throw new Error(`Пользователь с именем "${cleanName}" уже зарегистрирован. Пожалуйста, выполните вход.`);
     }
 
     const newUser = {
-      id: 'user_' + Date.now(),
+      id: isDenis ? 'user_admin' : 'user_' + Date.now(),
       name: cleanName,
-      role: 'patient',
+      role: isDenis ? 'admin' : 'patient', // Если Денис регистрируется — он сразу админ!
       registeredAt: new Date().toISOString(),
       isDemo: false
     };
