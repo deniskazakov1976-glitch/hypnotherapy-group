@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мой ритм — Дневник состояния между встречами | Группа гипнотерапии</title>
+  <meta name="description" content="Приложение для мониторинга состояния участников терапевтической группы Дениса Казакова с поддержкой ИИ-ассистента и аналитикой динамики.">
+  
+  <!-- PWA & Mobile Web App meta tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1C3836">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Мой ритм">
+  
+  <!-- Icons -->
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  
+  <!-- Стили -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Chart.js для интерактивных графиков динамики -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- ВЕРХНЯЯ ШАПКА -->
+  <header class="app-header">
+    <div class="header-container">
+      <a href="#" class="brand" id="brand-link">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">Мой ритм</div>
+          <div class="brand-subtitle">Дневник состояния между встречами</div>
+        </div>
+      </a>
+
+      <div class="header-actions">
+        <div id="user-nav-box" style="display: none;" class="user-badge">
+          <span id="user-display-name">Участник</span>
+          <span id="user-display-role" class="role-tag patient">Участник</span>
+        </div>
+        <button id="btn-admin-settings" class="btn btn-outline btn-sm" style="display: none;" title="Настройки API и Firebase">
+          ⚙️ Настройки
+        </button>
+        <button id="btn-logout" class="btn btn-outline btn-sm" style="display: none;">
+          Выйти
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ОСНОВНАЯ ОБЛАСТЬ -->
+  <main class="main-content">
+
+    <!-- Баннер установки PWA на телефон (появляется на мобильных устройствах) -->
+    <div id="pwa-install-banner" class="card" style="display: none; background: #FAFDFB; border-color: #BDE4D5; padding: 12px 18px; margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="assets/icon-192.png" width="38" height="38" style="border-radius: 10px;" alt="Мой ритм">
+          <div>
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--color-primary);">Установить «Мой ритм»</div>
+            <div style="font-size: 0.8rem; color: var(--color-text-muted);" id="pwa-install-desc">Добавьте иконку на экран телефона для входа в 1 клик</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" id="btn-pwa-install" class="btn btn-primary btn-sm">📱 Установить</button>
+          <button type="button" id="btn-pwa-dismiss" class="btn btn-outline btn-sm" style="color: var(--color-text-muted);">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         ЭКРАН 1: ВХОД / РЕГИСТРАЦИЯ
+         ==================================================================== -->
+    <section id="screen-auth" class="screen active">
+      <div class="auth-wrapper">
+        <div class="card">
+          <div class="auth-header-card">
+            <div class="auth-logo-large">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
+            </div>
+            <h1 class="card-title" style="font-size: 1.4rem;">Вход в «Мой ритм»</h1>
+            <p class="card-subtitle">Пространство бережного наблюдения за вашей динамикой между сессиями</p>
+          </div>
+
+          <div class="auth-tabs">
+            <button class="auth-tab active" id="tab-login-btn">Вход</button>
+            <button class="auth-tab" id="tab-register-btn">Регистрация</button>
+          </div>
+
+          <!-- Форма входа -->
+          <form id="form-login">
+            <div class="form-group">
+              <label class="form-label" for="login-name">Ваше имя</label>
+              <input type="text" id="login-name" class="form-input" placeholder="Например, Анна" required autocomplete="username">
+              <div class="form-hint">Имя, под которым вы участвуете в группе</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="login-password">Пароль</label>
+              <input type="password" id="login-password" class="form-input" placeholder="Введите пароль" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">
+              Войти в дневник
+            </button>
+          </form>
+
+          <!-- Форма регистрации -->
+          <form id="form-register" style="display: none;">
+            <div class="form-group">
+              <label class="form-label" for="reg-name">Ваше имя</label>
+              <input type="text" id="reg-name" class="form-input" placeholder="Например, Елена" required autocomplete="username">
+              <div class="form-hint">Как ведущему и ассистенту обращаться к вам</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reg-password">Придумайте пароль</label>
+              <input type="password" id="reg-password" class="form-input" placeholder="Минимум 4 символа" required autocomplete="new-password">
+            </div>
+
+            <button type="submit" class="btn btn-accent btn-full">
+              Зарегистрироваться и заполнить анкету
+            </button>
+          </form>
+
+          <div class="auth-divider">
+            <span>или</span>
+          </div>
+
+          <!-- Кнопка Входа через VK ID -->
+          <button id="btn-vk-login" class="btn btn-vk btn-full">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13.162 18.994c.609 0 .858-.406.851-.915-.072-1.785.748-2.52 1.488-2.52.74 0 1.258.74 1.776 1.776.518 1.036 1.11 1.659 2.072 1.659h2.368c1.332 0 1.998-.666 1.628-1.924-.37-1.258-1.48-2.664-2.516-3.848-.888-1.036-1.184-1.48-.148-2.812 1.036-1.332 2.368-3.404 2.59-4.736.222-1.332-.444-1.628-1.702-1.628h-2.368c-.962 0-1.332.444-1.702 1.258-.74 1.628-2.072 4.144-2.886 4.366-.444.148-.666-.074-.666-.888V6.938c0-.888-.222-1.258-.962-1.258h-3.7c-.592 0-.888.37-.888.74 0 .74 1.036.888 1.184 2.812v3.996c0 .888-.37 1.036-.74 1.036-.962 0-2.59-3.256-3.7-6.956-.37-.888-.74-1.258-1.702-1.258H2.18c-1.036 0-1.48.444-1.48 1.036 0 .962 1.184 5.772 5.55 11.988C9.18 21.658 12.066 22 13.162 18.994z"/>
+            </svg>
+            Войти через ВКонтакте (VK ID)
+          </button>
+
+          <!-- Быстрый демо-вход (аккуратно свернут для чистоты интерфейса) -->
+          <details class="quick-demo-box" style="cursor: pointer; text-align: center;">
+            <summary class="quick-demo-title" style="margin-bottom: 0; outline: none; list-style: none;">
+              🔍 Быстрый тестовый вход (Демо-режим) ▾
+            </summary>
+            <div class="demo-buttons-row" style="margin-top: 12px;">
+              <button type="button" class="btn btn-outline btn-sm" id="btn-demo-patient">
+                👤 Участник (Анна)
+              </button>
+              <button type="button" class="btn btn-outline btn-sm" id="btn-demo-therapist">
+                🩺 Ведущий (Денис)
+              </button>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         ЭКРАН 2: ПЕРВИЧНАЯ АНКЕТА
+         ==================================================================== -->
+    <section id="screen-initial-survey" class="screen">
+      <div class="card" style="max-width: 760px; margin: 0 auto;">
+        <div class="card-header">
+          <div>
+            <h1 class="card-title">Первичная анкета участника</h1>
+            <p class="card-subtitle">Заполняется один раз при вступлении в группу. Это ваша исходная точка для наблюдения за динамикой.</p>
+          </div>
+        </div>
+
+        <form id="form-initial-survey">
+          <div class="form-group">
+            <label class="form-label" for="init-concern">
+              Что вас беспокоит сейчас больше всего? <span style="color: #E06D53;">*</span>
+            </label>
+            <textarea id="init-concern" class="form-textarea" rows="4" placeholder="Опишите ваши мысли, телесные ощущения (ком в горле, зажимы, паника, бессонница), сложности в отношениях или работе..." required></textarea>
+            <div class="form-hint">Пишите свободно — это конфиденциальная информация только для терапевта.</div>
+          </div>
+
+          <!-- 4 Шкалы 1-10 -->
+          <div style="margin: 24px 0 12px;">
+            <h2 style="font-size: 1.05rem; font-weight: 700; color: var(--color-primary);">
+              Оцените ваше текущее базовое состояние (от 1 до 10)
+            </h2>
+            <p class="card-subtitle">Передвиньте ползунки к отметкам, которые лучше всего отражают последние дни</p>
+          </div>
+
+          <div class="scales-grid">
+            <!-- Тревожность -->
+            <div class="scale-card">
+              <div class="scale-card-header">
+                <span class="scale-name">🌊 Тревожность</span>
+                <span class="scale-value-badge" id="init-anxiety-badge">5</span>
+              </div>
+              <input type="range" min="1" max="10" value="5" class="scale-slider" id="init-anxiety-range">
+              <div class="scale-labels">
+                <span>1: Спокойствие</span>
+                <span id="init-anxiety-desc">5: Умеренное напряжение</span>
+                <span>10: Паника</span>
+              </div>
+            </div>
+
+            <!-- Сон -->
+            <div class="scale-card">
+              <div class="scale-card-header">
+                <span class="scale-name">🌙 Качество сна</span>
+                <span class="scale-value-badge" id="init-sleep-badge">5</span>
+              </div>
+              <input type="range" min="1" max="10" value="5" class="scale-slider" id="init-sleep-range">
+              <div class="scale-labels">
+                <span>1: Бессонница</span>
+                <span id="init-sleep-desc">5: Удовлетворительный</span>
+                <span>10: Глубокий сон</span>
+              </div>
+            </div>
+
+            <!-- Настроение -->
+            <div class="scale-card">
+              <div class="scale-card-header">
+                <span class="scale-name">🌿 Настроение</span>
+                <span class="scale-value-badge" id="init-mood-badge">5</span>
+              </div>
+              <input type="range" min="1" max="10" value="5" class="scale-slider" id="init-mood-range">
+              <div class="scale-labels">
+                <span>1: Подавленность</span>
+                <span id="init-mood-desc">5: Нейтрально</span>
+                <span>10: Радость и подъем</span>
+              </div>
+            </div>
+
+            <!-- Энергия -->
+            <div class="scale-card">
+              <div class="scale-card-header">
+                <span class="scale-name">⚡ Уровень энергии</span>
+                <span class="scale-value-badge" id="init-energy-badge">5</span>
+              </div>
+              <input type="range" min="1" max="10" value="5" class="scale-slider" id="init-energy-range">
+              <div class="scale-labels">
+                <span>1: Нет сил</span>
+                <span id="init-energy-desc">5: Хватает на рутину</span>
+                <span>10: Полон ресурса</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="init-goal">
+              Ваша главная цель и запрос на работу в группе <span style="color: #E06D53;">*</span>
+            </label>
+            <textarea id="init-goal" class="form-textarea" rows="3" placeholder="К какому состоянию или результату вы хотите прийти к завершению программы?.." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="init-duration">
+              Как долго вы живёте с этой проблемой?
+            </label>
+            <select id="init-duration" class="form-select">
+              <option value="Меньше 1 месяца">Меньше 1 месяца</option>
+              <option value="От 1 до 6 месяцев">От 1 до 6 месяцев</option>
+              <option value="От полугода до года" selected>От полугода до года</option>
+              <option value="1–3 года">1–3 года</option>
+              <option value="Более 3 лет / Сколько себя помню">Более 3 лет / Сколько себя помню</option>
+            </select>
+          </div>
+
+          <div style="margin-top: 28px;">
+            <button type="submit" class="btn btn-primary btn-full" style="padding: 14px;">
+              Сохранить анкету и перейти в личный кабинет →
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         ЭКРАН 3: ЛИЧНЫЙ КАБИНЕТ ПАЦИЕНТА
+         ==================================================================== -->
+    <section id="screen-patient-dashboard" class="screen">
+      <!-- Быстрое действие (sticky на мобильном) -->
+      <div style="margin-bottom: 16px;">
+        <button id="btn-open-checkin" class="btn btn-accent btn-full" style="padding: 14px 20px; font-size: 1.02rem; box-shadow: 0 4px 12px rgba(0,0,0,0.12);">
+          ✍️ Заполнить чек-ин за неделю
+        </button>
+      </div>
+
+      <!-- Баннер приветствия -->
+      <div class="welcome-banner">
+        <div>
+          <h1 class="welcome-title">Здравствуйте, <span id="dash-patient-name">Анна</span>!</h1>
+          <p class="welcome-subtitle">
+            Ваш дневник наблюдений за внутренним ритмом между сессиями группы.
+          </p>
+        </div>
+      </div>
+
+      <!-- Сводные индикаторы текущего состояния -->
+      <div class="metrics-snapshot">
+        <div class="metric-pill anxiety">
+          <span class="metric-header">🌊 Тревожность</span>
+          <div class="metric-number"><span id="pill-anxiety">--</span><span>/10</span></div>
+          <div class="metric-trend" id="trend-anxiety">Загрузка данных...</div>
+        </div>
+
+        <div class="metric-pill sleep">
+          <span class="metric-header">🌙 Качество сна</span>
+          <div class="metric-number"><span id="pill-sleep">--</span><span>/10</span></div>
+          <div class="metric-trend" id="trend-sleep">Загрузка данных...</div>
+        </div>
+
+        <div class="metric-pill mood">
+          <span class="metric-header">🌿 Настроение</span>
+          <div class="metric-number"><span id="pill-mood">--</span><span>/10</span></div>
+          <div class="metric-trend" id="trend-mood">Загрузка данных...</div>
+        </div>
+
+        <div class="metric-pill energy">
+          <span class="metric-header">⚡ Энергия</span>
+          <div class="metric-number"><span id="pill-energy">--</span><span>/10</span></div>
+          <div class="metric-trend" id="trend-energy">Загрузка данных...</div>
+        </div>
+      </div>
+
+      <!-- График динамики -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Динамика шкал по неделям</h2>
+            <p class="card-subtitle">Наглядная картина изменений нервной системы и эмоционального баланса</p>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="patient-dynamics-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Контейнер для отклика ИИ последнего чек-ина (или кризисного протокола) -->
+      <div id="patient-ai-box"></div>
+
+      <!-- Практика недели между встречами (якорь телесной саморегуляции) -->
+      <div class="practice-card">
+        <div class="practice-card-header">
+          <span class="practice-badge">Телесная опора</span>
+          <span class="practice-title">Дыхание блуждающего нерва (перезагрузка вегетатики)</span>
+        </div>
+        <p class="practice-desc">
+          Когда чувствуете подступающее напряжение или сложно уснуть: удлинённый тёплый выдох мягко переключает вегетативную нервную систему из стрессового режима «бей или беги» в состояние глубокого телесного покоя и восстановления.
+        </p>
+        <div class="practice-steps">
+          <div class="practice-step-pill">1. Мягкий вдох носом (4 счёта)</div>
+          <div class="practice-step-pill">2. Пауза-расслабление (2 счёта)</div>
+          <div class="practice-step-pill">3. Плавный тёплый выдох через рот (6–7 счётов)</div>
+        </div>
+      </div>
+
+      <!-- Хроника чек-инов -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">История еженедельных наблюдений</h2>
+            <p class="card-subtitle">Ваши заметки и отклики поддерживающего ассистента</p>
+          </div>
+        </div>
+        <div id="patient-timeline" class="timeline">
+          <!-- Заполняется динамически -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         ЭКРАН 4: КАБИНЕТ ТЕРАПЕВТА (АДМИНИСТРАТОРА)
+         ==================================================================== -->
+    <section id="screen-therapist-dashboard" class="screen">
+      <div class="card-header" style="margin-bottom: 20px;">
+        <div>
+          <h1 class="card-title" style="font-size: 1.5rem;">Кабинет ведущего терапевта</h1>
+          <p class="card-subtitle">Групповая гипнотерапия | Денис Казаков</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button id="btn-refresh-admin" class="btn btn-outline btn-sm">
+            🔄 Обновить
+          </button>
+        </div>
+      </div>
+
+      <!-- Контейнер для критических алертов безопасности -->
+      <div id="therapist-crisis-alerts-container"></div>
+
+      <!-- Сводка всей группы (Group Pulse Overview на одном экране) -->
+      <div style="margin-bottom: 8px;">
+        <h2 style="font-size: 1.05rem; font-weight: 700; color: var(--color-primary); margin-bottom: 10px;">
+          👥 Состояние группы в целом (3–5 участников)
+        </h2>
+        <div id="therapist-group-overview" class="group-overview-grid">
+          <!-- Заполняется динамически карточками участников -->
+        </div>
+      </div>
+
+      <!-- Вкладки участников группы -->
+      <div class="therapist-nav" id="therapist-tabs">
+        <!-- Генерируется из списка участников -->
+      </div>
+
+      <!-- Досье выбранного участника -->
+      <div class="patient-dossier-grid">
+        <!-- Левая колонка: Начальная анкета и запрос -->
+        <div class="initial-profile-card">
+          <div class="card-header" style="margin-bottom: 12px;">
+            <h2 class="card-title" style="font-size: 1.1rem;" id="therapist-profile-name">Участник</h2>
+          </div>
+
+          <div class="profile-field">
+            <div class="profile-field-title">Первичный запрос / Что беспокоит</div>
+            <div class="profile-field-value" id="therapist-profile-concern">—</div>
+          </div>
+
+          <div class="profile-field">
+            <div class="profile-field-title">Цель терапии</div>
+            <div class="profile-field-value" id="therapist-profile-goal">—</div>
+          </div>
+
+          <div class="profile-field">
+            <div class="profile-field-title">Стаж проблемы</div>
+            <div class="profile-field-value" id="therapist-profile-duration">—</div>
+          </div>
+
+          <div class="profile-field">
+            <div class="profile-field-title">Дата регистрации</div>
+            <div class="profile-field-value" id="therapist-profile-regdate">—</div>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid var(--color-border); margin: 18px 0;">
+
+          <!-- Кнопка генерации ИИ-сводки к сессии -->
+          <div>
+            <button id="btn-generate-ai-summary" class="btn btn-accent btn-full">
+              ✨ ИИ-сводка перед сессией
+            </button>
+            <div class="form-hint" style="text-align: center; margin-top: 6px;">
+              Аналитическая выжимка для очной встречи
+            </div>
+          </div>
+
+          <!-- Результат ИИ-сводки -->
+          <div id="therapist-ai-summary-box" style="display: none;">
+            <div class="ai-summary-result" id="therapist-ai-summary-text"></div>
+            <button id="btn-copy-summary" class="btn btn-outline btn-sm btn-full" style="margin-top: 8px;">
+              📋 Скопировать текст сводки
+            </button>
+          </div>
+        </div>
+
+        <!-- Правая колонка: График и история ответов -->
+        <div>
+          <!-- График динамики -->
+          <div class="card" style="margin-bottom: 20px;">
+            <div class="card-header" style="flex-wrap: wrap; gap: 12px; align-items: center;">
+              <div>
+                <h3 class="card-title" style="font-size: 1.08rem;">Динамика показателей</h3>
+                <p class="card-subtitle">Тревожность, сон, настроение, энергия от старта до текущей недели</p>
+              </div>
+              <button id="btn-generate-ai-summary-top" class="btn btn-accent btn-sm" style="margin-left: auto;">
+                ✨ ИИ-сводка к сессии
+              </button>
+            </div>
+            <div class="chart-container">
+              <canvas id="therapist-dynamics-chart"></canvas>
+            </div>
+          </div>
+
+          <!-- История еженедельных чек-инов -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title" style="font-size: 1.08rem;">История еженедельных отчётов</h3>
+            </div>
+            <div id="therapist-patient-timeline" class="timeline">
+              <!-- Заполняется динамически -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ====================================================================
+       МОДАЛЬНОЕ ОКНО: ЕЖЕНЕДЕЛЬНЫЙ ЧЕК-ИН
+       ==================================================================== -->
+  <div id="modal-checkin" class="modal-backdrop">
+    <div class="modal-card">
+      <button class="modal-close-btn" id="modal-checkin-close">&times;</button>
+      
+      <div class="card-header" style="margin-bottom: 14px;">
+        <div>
+          <h2 class="card-title">Еженедельный чек-ин</h2>
+          <p class="card-subtitle">Короткая фиксация состояния между сессиями (занимает 3–4 минуты)</p>
+        </div>
+      </div>
+
+      <!-- Переключатель шагов (для мобильного удобства) -->
+      <div class="modal-steps-indicator">
+        <button type="button" class="modal-step-tab active" id="chk-tab-step1">
+          1. Шкалы (30 сек)
+        </button>
+        <button type="button" class="modal-step-tab" id="chk-tab-step2">
+          2. Мысли и инсайты
+        </button>
+      </div>
+
+      <form id="form-weekly-checkin">
+        <!-- ШАГ 1: 4 ШКАЛЫ СОСТОЯНИЯ -->
+        <div id="chk-step1-pane">
+          <div class="scales-grid" style="margin: 6px 0 16px;">
+            <!-- Тревожность -->
+            <div class="scale-card">
+              <div class="scale-card-header">
+                <span class="scale-name">🌊 Тревожность (↓ лучше)</span>
+                <span class="scale-value-badge" id="chk-anxiety-badge">5</span>
+              </div>
+              <input type="range" min="1" max="10" value="5" class="scale-slider" id="chk-anxiety-range">
+              <div class="scale-labels">
+                <span>1: Спокойно</span>
+                <span id="chk-anxiety-desc">5: Умеренно</span>
+                <span>10: Паника</span>
+              </div>
+            </div>
+
+            <!-- Сон -->
+            <div class="scale-card">
+              <div class="scale-card-header">
+                <span class="scale-name">🌙 Сон (↑ лучше)</span>
+                <span class="scale-value-badge" id="chk-sleep-badge">5</span>
+              </div>
+              <input type="range" min="1" max="10" value="5" class="scale-slider" id="chk-sleep-range">
+              <div class="scale-labels">
+                <span>1: Бессонница</span>
+                <span id="chk-sleep-desc">5: Удовлетворительный</span>
+                <span>10: Глубокий</span>
+              </div>
+            </div>
+
+            <!-- Настроение -->
+            <div class="scale-card">
+              <div class="scale-card-header">
+                <span class="scale-name">🌿 Настроение (↑ лучше)</span>
+                <span class="scale-value-badge" id="chk-mood-badge">5</span>
+              </div>
+              <input type="range" min="1" max="10" value="5" class="scale-slider" id="chk-mood-range">
+              <div class="scale-labels">
+                <span>1: Подавленность</span>
+                <span id="chk-mood-desc">5: Нейтральное, ровное</span>
+                <span>10: Подъем</span>
+              </div>
+            </div>
+
+            <!-- Энергия -->
+            <div class="scale-card">
+              <div class="scale-card-header">
+                <span class="scale-name">⚡ Энергия (↑ лучше)</span>
+                <span class="scale-value-badge" id="chk-energy-badge">5</span>
+              </div>
+              <input type="range" min="1" max="10" value="5" class="scale-slider" id="chk-energy-range">
+              <div class="scale-labels">
+                <span>1: Истощение</span>
+                <span id="chk-energy-desc">5: Хватает на рутину</span>
+                <span>10: Полон сил</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 14px;">
+            <button type="button" class="btn btn-primary btn-full" id="btn-chk-to-step2">
+              Далее: добавить мысли и инсайты →
+            </button>
+          </div>
+        </div>
+
+        <!-- ШАГ 2: ТЕКСТОВЫЕ ЗАМЕТКИ -->
+        <div id="chk-step2-pane" style="display: none;">
+          <div class="form-group">
+            <label class="form-label" for="chk-week-text">
+              Как прошла ваша неделя?
+            </label>
+            <textarea id="chk-week-text" class="form-textarea" rows="3" placeholder="Что запомнилось телу за эту неделю? Был ли момент, когда стало заметно легче — или наоборот, тяжелее?"></textarea>
+            <div class="form-hint">По желанию — можно оставить пустым или записать пару слов</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="chk-insights">
+              Что изменилось или какие инсайты вы заметили?
+            </label>
+            <textarea id="chk-insights" class="form-textarea" rows="2" placeholder="Например: заметил(а), что в стрессе задерживаю дыхание; получилось вовремя сделать паузу..."></textarea>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button type="button" class="btn btn-outline" id="btn-chk-back-to-step1" style="flex: 0 0 auto;">
+              ← К шкалам
+            </button>
+            <button type="submit" class="btn btn-primary btn-full" id="btn-submit-checkin">
+              Сохранить чек-ин и получить отклик ✨
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       МОДАЛЬНОЕ ОКНО: НАСТРОЙКИ (ДЛЯ ДЕНИСА)
+       ==================================================================== -->
+  <div id="modal-settings" class="modal-backdrop">
+    <div class="modal-card">
+      <button class="modal-close-btn" id="modal-settings-close">&times;</button>
+      
+      <div class="card-header" style="margin-bottom: 14px;">
+        <div>
+          <h2 class="card-title">Параметры интеграции</h2>
+          <p class="card-subtitle">Подключение anymodel.org, Firebase и экстренные контакты</p>
+        </div>
+      </div>
+
+      <form id="form-settings">
+        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 10px;">
+          ИИ-модель (anymodel.org / OpenAI-совместимый API)
+        </h3>
+
+        <div class="form-group">
+          <label class="form-label" for="set-ai-endpoint">API Endpoint</label>
+          <input type="url" id="set-ai-endpoint" class="form-input" value="https://api.anymodel.org/v1/chat/completions">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="set-ai-model">Название модели</label>
+          <input type="text" id="set-ai-model" class="form-input" value="am/nemotron-3-ultra-550b-a55b" placeholder="am/nemotron-3-ultra-550b-a55b">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="set-ai-key">API-ключ (anymodel.org)</label>
+          <input type="password" id="set-ai-key" class="form-input" placeholder="sk-...">
+          <div class="form-hint">Если ключ не указан, автоматически работает встроенный умный эмпатичный симулятор</div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--color-border); margin: 20px 0;">
+
+        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 10px;">
+          Управление базой данных
+        </h3>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+          <button type="button" class="btn btn-outline btn-sm" id="btn-export-data">
+            💾 Экспорт в JSON
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" id="btn-import-data">
+            📥 Импорт из JSON
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" id="btn-reset-demo" style="color: #E06D53;">
+            🔄 Сброс демо-данных
+          </button>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <button type="submit" class="btn btn-primary btn-full">
+            Сохранить настройки
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- КОНТЕЙНЕР ДЛЯ ВСплывающих уведомлений -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- ПОДВАЛ -->
+  <footer class="footer">
+    <div style="max-width: 1080px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <strong>«Мой ритм»</strong> — терапевтическая группа Дениса Казакова (Пермь / онлайн).
+      </div>
+      <div>
+        <a href="https://deniskazakov1976-glitch.github.io/hypnotherapy-group/" target="_blank" rel="noopener">Сайт группы</a> •
+        <a href="https://wa.me/79028028246" target="_blank" rel="noopener">WhatsApp</a> •
+        <a href="https://t.me/dkazak1999" target="_blank" rel="noopener">Telegram</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Скрипты приложения как ES-модули -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
