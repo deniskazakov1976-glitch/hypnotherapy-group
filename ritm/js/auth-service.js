@@ -40,6 +40,7 @@ export class AuthService {
     const cleanInput = identifier.trim();
     const cleanLower = cleanInput.toLowerCase();
     const cleanPass = password.trim();
+    const users = storage.getUsers();
 
     // 1. Прошитый вход администратора (Денис Казаков)
     const isDenisEmail = cleanLower === 'denis_kazakov@mail.ru';
@@ -50,7 +51,6 @@ export class AuthService {
         throw new Error('Неверный пароль. Попробуйте ещё раз.');
       }
 
-      const users = storage.getUsers();
       let adminUser = users.find(u => u.role === 'admin') || {
         id: 'user_admin',
         name: 'Денис Казаков',
@@ -228,10 +228,10 @@ export class AuthService {
     }
 
     const newUser = {
-      id: isDenis ? 'user_admin' : 'user_' + Date.now(),
+      id: 'user_' + Date.now(),
       name: cleanName,
       email: cleanEmail,
-      role: isDenis ? 'admin' : 'patient',
+      role: 'patient',
       registeredAt: new Date().toISOString(),
       isDemo: false
     };

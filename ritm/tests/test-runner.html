@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мой ритм — Центр тестирования качества (QA Suite)</title>
+  <link rel="icon" type="image/png" href="../assets/favicon.png">
+  <style>
+    :root {
+      --bg: #0F172A;
+      --card-bg: #1E293B;
+      --card-border: #334155;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --primary: #10B981;
+      --accent: #38BDF8;
+      --danger: #EF4444;
+      --warning: #F59E0B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 24px 16px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .title-box h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .title-box p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      margin-top: 4px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #0F172A;
+    }
+
+    .btn-primary:hover {
+      background: #059669;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+    }
+
+    .btn-outline:hover {
+      color: var(--text-main);
+      border-color: var(--text-muted);
+    }
+
+    /* Метрики тестирования */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .stat-passed .stat-value { color: var(--primary); }
+    .stat-failed .stat-value { color: var(--danger); }
+    .stat-total .stat-value { color: var(--accent); }
+    .stat-rate .stat-value { color: #A78BFA; }
+
+    /* Прогресс-бар */
+    .progress-bar-bg {
+      background: #334155;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .progress-bar-fill {
+      background: linear-gradient(90deg, #10B981, #38BDF8);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* Наборы тестов (Suites) */
+    .suite-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .suite-header {
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--card-border);
+      font-weight: 700;
+      font-size: 0.98rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .suite-badge {
+      font-size: 0.78rem;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .suite-badge.failed {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .test-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .test-item {
+      padding: 12px 18px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      gap: 12px;
+    }
+
+    .test-item:last-child {
+      border-bottom: none;
+    }
+
+    .test-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .test-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .test-name {
+      color: var(--text-main);
+    }
+
+    .test-duration {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      font-family: monospace;
+    }
+
+    .test-error {
+      margin-top: 6px;
+      padding: 8px 12px;
+      background: rgba(239, 68, 68, 0.15);
+      border-left: 3px solid var(--danger);
+      border-radius: 4px;
+      color: #FCA5A5;
+      font-size: 0.8rem;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="title-box">
+        <h1><span>🛡️</span> Мой ритм — QA Test Suite</h1>
+        <p>Полный комплекс автоматизированного тестирования модулей перед выходом в люди</p>
+      </div>
+      <div class="actions">
+        <a href="../index.html" class="btn btn-outline">← В приложение</a>
+        <button id="btn-rerun" class="btn btn-primary">⚡ Запустить тесты</button>
+      </div>
+    </header>
+
+    <!-- Индикаторы сводки -->
+    <div class="stats-grid">
+      <div class="stat-card stat-total">
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-label">Всего тестов</div>
+      </div>
+      <div class="stat-card stat-passed">
+        <div class="stat-value" id="stat-passed">0</div>
+        <div class="stat-label">Успешно</div>
+      </div>
+      <div class="stat-card stat-failed">
+        <div class="stat-value" id="stat-failed">0</div>
+        <div class="stat-label">Ошибок</div>
+      </div>
+      <div class="stat-card stat-rate">
+        <div class="stat-value" id="stat-rate">0%</div>
+        <div class="stat-label">Надёжность</div>
+      </div>
+    </div>
+
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-bar"></div>
+    </div>
+
+    <!-- Контейнер результатов сьютов -->
+    <div id="suites-container"></div>
+  </div>
+
+  <script type="module">
+    import { TestRunner, registerAllTests } from './unit-tests.js';
+
+    async function executeTests() {
+      const suitesContainer = document.getElementById('suites-container');
+      suitesContainer.innerHTML = '<div style="text-align:center; padding: 40px; color: var(--text-muted);">Выполняется тестирование всех модулей приложения...</div>';
+
+      const statTotal = document.getElementById('stat-total');
+      const statPassed = document.getElementById('stat-passed');
+      const statFailed = document.getElementById('stat-failed');
+      const statRate = document.getElementById('stat-rate');
+      const progressBar = document.getElementById('progress-bar');
+
+      const runner = new TestRunner();
+      registerAllTests(runner);
+
+      const result = await runner.run();
+
+      // Обновляем статистику
+      statTotal.textContent = result.total;
+      statPassed.textContent = result.passed;
+      statFailed.textContent = result.failed;
+      const rate = result.total > 0 ? Math.round((result.passed / result.total) * 100) : 0;
+      statRate.textContent = rate + '%';
+      progressBar.style.width = '100%';
+      if (result.failed > 0) {
+        progressBar.style.background = 'var(--danger)';
+      } else {
+        progressBar.style.background = 'var(--primary)';
+      }
+
+      // Отрисовываем результаты
+      suitesContainer.innerHTML = '';
+      result.suites.forEach(suite => {
+        const hasFailed = suite.tests.some(t => !t.passed);
+        const card = document.createElement('div');
+        card.className = 'suite-card';
+
+        card.innerHTML = `
+          <div class="suite-header">
+            <span>${suite.name}</span>
+            <span class="suite-badge ${hasFailed ? 'failed' : ''}">
+              ${hasFailed ? 'ЕСТЬ ОШИБКА' : `${suite.tests.length}/${suite.tests.length} ПРОЙДЕНО ✓`}
+            </span>
+          </div>
+          <div class="test-list">
+            ${suite.tests.map(t => `
+              <div class="test-item">
+                <div style="flex: 1; min-width: 0;">
+                  <div class="test-left">
+                    <span class="test-icon">${t.passed ? '✅' : '❌'}</span>
+                    <span class="test-name">${t.name}</span>
+                  </div>
+                  ${t.error ? `<div class="test-error">${t.error}</div>` : ''}
+                </div>
+                <div class="test-duration">${t.duration}ms</div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        suitesContainer.appendChild(card);
+      });
+    }
+
+    document.getElementById('btn-rerun').addEventListener('click', executeTests);
+    window.addEventListener('DOMContentLoaded', executeTests);
+  </script>
+</body>
+</html>
