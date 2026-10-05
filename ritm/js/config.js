@@ -29,8 +29,9 @@ export const APP_CONFIG = {
 
   // Настройки ИИ по умолчанию (сервис anymodel.org / OpenAI-совместимый)
   ai: {
-    endpoint: 'https://api.anymodel.org/v1/chat/completions',
+    endpoint: 'https://anymodel.org/v1/chat/completions',
     defaultModel: 'am/nemotron-3-ultra-550b-a55b',
+    apiKey: (typeof atob !== 'undefined') ? atob('c2stZGM5ZDRiN2RmMzZiYTU1NS1qYWowODktZTRmNTU2Y2E=') : '',
     temperature: 0.6,
     maxTokens: 500
   },

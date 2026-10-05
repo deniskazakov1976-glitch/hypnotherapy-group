@@ -323,6 +323,12 @@ export class StorageService {
         if (!parsed.model || parsed.model === 'gpt-4o-mini') {
           parsed.model = APP_CONFIG.ai.defaultModel;
         }
+        if (!parsed.endpoint || parsed.endpoint === 'https://api.anymodel.org/v1/chat/completions') {
+          parsed.endpoint = APP_CONFIG.ai.endpoint;
+        }
+        if (!parsed.apiKey || parsed.apiKey.trim() === '') {
+          parsed.apiKey = APP_CONFIG.ai.apiKey || '';
+        }
         return parsed;
       }
     } catch (e) {
@@ -331,7 +337,7 @@ export class StorageService {
     return {
       endpoint: APP_CONFIG.ai.endpoint,
       model: APP_CONFIG.ai.defaultModel,
-      apiKey: '',
+      apiKey: APP_CONFIG.ai.apiKey || '',
       useMockFallback: true
     };
   }
