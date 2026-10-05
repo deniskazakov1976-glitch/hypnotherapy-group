@@ -1043,62 +1043,123 @@ class App {
       });
     }
 
-    // 2. Обработка баннера установки на мобильных устройствах
+    // Проверяем, открыто ли уже как автономное приложение
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true;
+
+    // Определение платформы iOS
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    // Кнопка в шапке (показываем, если открыто в обычном браузере)
+    const btnHeaderInstall = document.getElementById('btn-header-install');
+    if (btnHeaderInstall && !isStandalone) {
+      btnHeaderInstall.style.display = 'inline-flex';
+    }
+
+    // Элементы модального окна установки
+    const modalInstallId = 'modal-install-pwa';
+    const tabAndroid = document.getElementById('tab-pwa-android');
+    const tabIos = document.getElementById('tab-pwa-ios');
+    const paneAndroid = document.getElementById('pwa-pane-android');
+    const paneIos = document.getElementById('pwa-pane-ios');
+    const promptBox = document.getElementById('pwa-android-prompt-box');
+    const btnDirectInstall = document.getElementById('btn-pwa-direct-install');
+    const btnOpenInstallModal = document.getElementById('btn-open-install-modal');
+    const btnModalClose = document.getElementById('modal-install-close');
+    const btnModalOk = document.getElementById('btn-pwa-modal-ok');
+
+    // Функция переключения вкладок в модальном окне
+    const switchPwaTab = (platform) => {
+      if (platform === 'android') {
+        tabAndroid?.classList.add('active');
+        tabIos?.classList.remove('active');
+        if (paneAndroid) paneAndroid.style.display = 'block';
+        if (paneIos) paneIos.style.display = 'none';
+      } else {
+        tabIos?.classList.add('active');
+        tabAndroid?.classList.remove('active');
+        if (paneIos) paneIos.style.display = 'block';
+        if (paneAndroid) paneAndroid.style.display = 'none';
+      }
+    };
+
+    // Открытие модального окна с автовыбором вкладки под систему пользователя
+    const openInstallModal = (platform = null) => {
+      const targetPlatform = platform || (isIos ? 'ios' : 'android');
+      switchPwaTab(targetPlatform);
+      this.openModal(modalInstallId);
+    };
+
+    // Слушатели переключения вкладок
+    tabAndroid?.addEventListener('click', () => switchPwaTab('android'));
+    tabIos?.addEventListener('click', () => switchPwaTab('ios'));
+
+    // Открытие модалки по клику на кнопки
+    btnOpenInstallModal?.addEventListener('click', () => openInstallModal());
+    btnHeaderInstall?.addEventListener('click', () => openInstallModal());
+
+    // Закрытие модалки
+    btnModalClose?.addEventListener('click', () => this.closeModal(modalInstallId));
+    btnModalOk?.addEventListener('click', () => this.closeModal(modalInstallId));
+
+    // Элементы плавающего баннера
     const banner = document.getElementById('pwa-install-banner');
     const btnInstall = document.getElementById('btn-pwa-install');
     const btnDismiss = document.getElementById('btn-pwa-dismiss');
     const descText = document.getElementById('pwa-install-desc');
 
-    if (!banner) return;
-
-    // Проверяем, не открыто ли уже в режиме отдельного приложения (standalone)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                         window.navigator.standalone === true;
-
-    if (isStandalone || localStorage.getItem('moy_ritm_pwa_dismissed')) {
-      banner.style.display = 'none';
-      return;
-    }
-
     let deferredPrompt = null;
 
-    // Android / Chrome / Edge перехватывают системное событие установки
+    // Установка в 1 клик для Android / Chrome / Chromium
+    const triggerInstall = async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          this.showToast('«Мой ритм» устанавливается на ваш телефон! 🎉');
+          this.closeModal(modalInstallId);
+          if (banner) banner.style.display = 'none';
+        }
+        deferredPrompt = null;
+        if (promptBox) promptBox.style.display = 'none';
+      } else {
+        openInstallModal(isIos ? 'ios' : 'android');
+      }
+    };
+
+    // Слушатель системного события PWA перед установкой
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      banner.style.display = 'block';
+      if (promptBox) promptBox.style.display = 'block';
+      if (banner && !isStandalone && !localStorage.getItem('moy_ritm_pwa_dismissed')) {
+        banner.style.display = 'block';
+      }
     });
 
-    if (btnInstall) {
-      btnInstall.addEventListener('click', async () => {
-        if (deferredPrompt) {
-          deferredPrompt.prompt();
-          const { outcome } = await deferredPrompt.userChoice;
-          if (outcome === 'accepted') {
-            console.log('[PWA] Пользователь установил приложение');
-          }
-          deferredPrompt = null;
-          banner.style.display = 'none';
-        } else {
-          // Если iOS Safari
-          this.showToast('Для установки на iPhone: нажмите «Поделиться» ⎋ внизу Safari, затем «На экран "Домой"»');
-        }
-      });
-    }
+    // Кнопка быстрой установки в модальном окне
+    btnDirectInstall?.addEventListener('click', triggerInstall);
 
-    if (btnDismiss) {
-      btnDismiss.addEventListener('click', () => {
-        banner.style.display = 'none';
-        localStorage.setItem('moy_ritm_pwa_dismissed', 'true');
-      });
-    }
+    // Кнопка на плавающем баннере
+    btnInstall?.addEventListener('click', () => {
+      if (deferredPrompt) {
+        triggerInstall();
+      } else {
+        openInstallModal();
+      }
+    });
 
-    // Определение iOS Safari
-    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    // Закрытие баннера
+    btnDismiss?.addEventListener('click', () => {
+      if (banner) banner.style.display = 'none';
+      localStorage.setItem('moy_ritm_pwa_dismissed', 'true');
+    });
+
+    // Настройка баннера для iOS Safari
     if (isIos && !isStandalone && !localStorage.getItem('moy_ritm_pwa_dismissed')) {
-      banner.style.display = 'block';
+      if (banner) banner.style.display = 'block';
       if (descText) {
-        descText.textContent = 'Нажмите «Поделиться» ⎋ внизу Safari → «На экран "Домой"»';
+        descText.textContent = 'Установите иконку: нажмите «Поделиться» ⎋ → «На экран "Домой"»';
       }
       if (btnInstall) {
         btnInstall.textContent = 'Инструкция';
