@@ -20,7 +20,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   
   <!-- Стили -->
-  <link rel="stylesheet" href="styles.css?v=2.0.0">
+  <link rel="stylesheet" href="styles.css?v=2.1.0">
 
   <!-- Chart.js для интерактивных графиков динамики -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -64,18 +64,18 @@
   <main class="main-content">
 
     <!-- Баннер установки PWA на телефон (появляется на мобильных устройствах) -->
-    <div id="pwa-install-banner" class="card" style="display: none; background: #FAFDFB; border-color: #BDE4D5; padding: 12px 18px; margin-bottom: 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <img src="assets/icon-192.png" width="38" height="38" style="border-radius: 10px;" alt="Мой ритм">
-          <div>
-            <div style="font-weight: 700; font-size: 0.95rem; color: var(--color-primary);">Установить «Мой ритм»</div>
-            <div style="font-size: 0.8rem; color: var(--color-text-muted);" id="pwa-install-desc">Добавьте иконку на экран телефона для входа в 1 клик</div>
+    <div id="pwa-install-banner" class="card" style="display: none; background: #FAFDFB; border-color: #BDE4D5; padding: 12px 14px; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+          <img src="assets/icon-192.png" width="36" height="36" style="border-radius: 10px; flex-shrink: 0;" alt="Мой ритм">
+          <div style="min-width: 0;">
+            <div style="font-weight: 700; font-size: 0.92rem; color: var(--color-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Установить «Мой ритм»</div>
+            <div style="font-size: 0.76rem; color: var(--color-text-muted); line-height: 1.25;" id="pwa-install-desc">Иконка на рабочий стол телефона</div>
           </div>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button type="button" id="btn-pwa-install" class="btn btn-primary btn-sm">📱 Установить</button>
-          <button type="button" id="btn-pwa-dismiss" class="btn btn-outline btn-sm" style="color: var(--color-text-muted);">✕</button>
+        <div style="display: flex; gap: 6px; flex-shrink: 0;">
+          <button type="button" id="btn-pwa-install" class="btn btn-primary btn-sm" style="padding: 6px 10px; font-size: 0.82rem;">📱 Установить</button>
+          <button type="button" id="btn-pwa-dismiss" class="btn btn-outline btn-sm" style="color: var(--color-text-muted); padding: 6px 9px;">✕</button>
         </div>
       </div>
     </div>
