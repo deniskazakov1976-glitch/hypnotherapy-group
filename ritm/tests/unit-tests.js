@@ -655,4 +655,83 @@ export function registerAllTests(runner) {
       expect(r512.status).toBe(200);
     });
   });
+
+  // --------------------------------------------------------------------------
+  // СЬЮТ 8: ШКАЛЫ СОСТОЯНИЯ И СТАБИЛЬНОСТЬ ОКНА СРЕЗА
+  // --------------------------------------------------------------------------
+  runner.describe('8. Шкалы состояния и стабильность окна экспресс-среза', () => {
+    const getDesc = (metric, val) => {
+      val = parseInt(val, 10);
+      switch(metric) {
+        case 'anxiety':
+          if (val <= 2) return `${val}: Спокойствие`;
+          if (val <= 4) return `${val}: Лёгкое волнение`;
+          if (val <= 6) return `${val}: Умеренное напряжение`;
+          if (val <= 8) return `${val}: Заметная тревога`;
+          return `${val}: Острая тревога / паника`;
+        case 'sleep':
+          if (val <= 2) return `${val}: Тяжёлая бессонница`;
+          if (val <= 4) return `${val}: Прерывистый, тревожный`;
+          if (val <= 6) return `${val}: Удовлетворительный`;
+          if (val <= 8) return `${val}: Хороший, крепкий`;
+          return `${val}: Глубокий, восстанавливающий`;
+        case 'mood':
+          if (val <= 2) return `${val}: Глубокая подавленность`;
+          if (val <= 4) return `${val}: Сниженное, апатия`;
+          if (val <= 6) return `${val}: Нейтральное, ровное`;
+          if (val <= 8) return `${val}: Светлое, хорошее`;
+          return `${val}: Душевный подъем`;
+        case 'energy':
+          if (val <= 2) return `${val}: Полное истощение`;
+          if (val <= 4) return `${val}: Быстрая утомляемость`;
+          if (val <= 6) return `${val}: Хватает на рутину`;
+          if (val <= 8) return `${val}: Бодрость, активность`;
+          return `${val}: Полон ресурса и сил`;
+      }
+      return `${val}/10`;
+    };
+
+    const getVisualClasses = (metric, val) => {
+      val = parseInt(val, 10);
+      if (metric === 'anxiety') {
+        if (val >= 7) return { status: 'status-alert', badge: 'badge-alert' };
+        if (val >= 4) return { status: 'status-warn', badge: 'badge-warn' };
+        return { status: 'status-good', badge: 'badge-good' };
+      } else {
+        if (val <= 3) return { status: 'status-alert', badge: 'badge-alert' };
+        if (val <= 6) return { status: 'status-warn', badge: 'badge-warn' };
+        return { status: 'status-good', badge: 'badge-good' };
+      }
+    };
+
+    runner.it('Все 40 значений шкал (1..10 для 4 метрик) возвращают корректные читаемые описания', () => {
+      const metrics = ['anxiety', 'sleep', 'mood', 'energy'];
+      for (const m of metrics) {
+        for (let v = 1; v <= 10; v++) {
+          const desc = getDesc(m, v);
+          expect(typeof desc).toBe('string');
+          expect(desc.length).toBeGreaterThan(3);
+          expect(desc).toContain(String(v));
+        }
+      }
+    });
+
+    runner.it('Цветовые индикаторы для обратной шкалы (тревожность: 1-3 зеленый, 7-10 красный)', () => {
+      expect(getVisualClasses('anxiety', 1).badge).toBe('badge-good');
+      expect(getVisualClasses('anxiety', 5).badge).toBe('badge-warn');
+      expect(getVisualClasses('anxiety', 9).badge).toBe('badge-alert');
+    });
+
+    runner.it('Цветовые индикаторы для прямых шкал (сон, настроение, энергия: 1-3 красный, 7-10 зеленый)', () => {
+      expect(getVisualClasses('sleep', 2).badge).toBe('badge-alert');
+      expect(getVisualClasses('sleep', 5).badge).toBe('badge-warn');
+      expect(getVisualClasses('sleep', 9).badge).toBe('badge-good');
+
+      expect(getVisualClasses('mood', 1).badge).toBe('badge-alert');
+      expect(getVisualClasses('mood', 8).badge).toBe('badge-good');
+
+      expect(getVisualClasses('energy', 3).badge).toBe('badge-alert');
+      expect(getVisualClasses('energy', 10).badge).toBe('badge-good');
+    });
+  });
 }

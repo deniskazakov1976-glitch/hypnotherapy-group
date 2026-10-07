@@ -451,15 +451,25 @@ body {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 14px 16px;
   position: relative;
+  min-height: 128px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.scale-card:hover {
+  border-color: var(--color-primary-light);
 }
 
 .scale-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .scale-name {
@@ -468,21 +478,42 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--color-text);
 }
 
 .scale-value-badge {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 800;
-  min-width: 36px;
-  height: 36px;
+  min-width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-full);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-border);
   color: var(--color-primary);
   box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+
+/* Динамические цветовые акценты бейджей */
+.scale-value-badge.badge-good {
+  background: #E8F5E9;
+  border-color: #81C784;
+  color: #1B5E20;
+}
+
+.scale-value-badge.badge-warn {
+  background: #FFF8E1;
+  border-color: #FFD54F;
+  color: #B45309;
+}
+
+.scale-value-badge.badge-alert {
+  background: #FEE2E2;
+  border-color: #FCA5A5;
+  color: #B91C1C;
 }
 
 .scale-slider {
@@ -493,7 +524,7 @@ body {
   background: #D5DFDC;
   border-radius: 4px;
   outline: none;
-  margin: 8px 0;
+  margin: 6px 0;
   cursor: pointer;
 }
 
@@ -528,28 +559,55 @@ body {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 6px;
-  font-size: 0.74rem;
+  gap: 8px;
+  font-size: 0.76rem;
   color: var(--color-text-muted);
-  margin-top: 6px;
+  margin-top: 4px;
+  min-height: 32px; /* Фиксированная высота предотвращает скачки окна при изменении описания */
 }
 
 .scale-labels span:first-child {
   white-space: nowrap;
   text-align: left;
+  font-size: 0.76rem;
 }
 
 .scale-labels span:nth-child(2) {
   text-align: center;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.82rem;
   color: var(--color-primary);
   line-height: 1.25;
-  padding: 0 4px;
+  padding: 3px 8px;
+  background: rgba(31, 95, 78, 0.08);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+/* Цветовые статусы описания шкалы */
+.scale-labels span:nth-child(2).status-good {
+  background: #E8F5E9;
+  color: #1B5E20;
+}
+
+.scale-labels span:nth-child(2).status-warn {
+  background: #FFF8E1;
+  color: #B45309;
+}
+
+.scale-labels span:nth-child(2).status-alert {
+  background: #FEE2E2;
+  color: #B91C1C;
 }
 
 .scale-labels span:last-child {
   white-space: nowrap;
   text-align: right;
+  font-size: 0.76rem;
 }
 
 /* ==========================================================================
@@ -922,9 +980,15 @@ body {
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   padding: 24px;
   box-shadow: var(--shadow-lg);
   position: relative;
+}
+
+.modal-card-wide {
+  max-width: 680px;
 }
 
 .modal-close-btn {
@@ -1390,22 +1454,29 @@ body {
 
   /* Шкалы */
   .scale-card {
-    padding: 12px 10px;
+    padding: 12px 12px;
+    min-height: 120px;
   }
 
   .scale-name {
-    font-size: 0.88rem;
+    font-size: 0.9rem;
   }
 
   .scale-value-badge {
-    min-width: 32px;
-    height: 32px;
-    font-size: 0.95rem;
+    min-width: 36px;
+    height: 36px;
+    font-size: 1.05rem;
   }
 
   .scale-labels {
-    font-size: 0.68rem;
-    gap: 4px;
+    font-size: 0.74rem;
+    gap: 6px;
+    min-height: 30px;
+  }
+
+  .scale-labels span:nth-child(2) {
+    font-size: 0.78rem;
+    padding: 2px 6px;
   }
 }
 

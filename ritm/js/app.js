@@ -528,16 +528,62 @@ class App {
       return `${val}/10`;
     };
 
+    const updateScaleVisuals = (metric, val, badge, desc) => {
+      val = parseInt(val, 10);
+      let statusClass = 'status-good';
+      let badgeClass = 'badge-good';
+
+      if (metric === 'anxiety') {
+        // Для тревожности: 1-3 спокойствие, 4-6 умеренно, 7-10 заметная/острая тревога
+        if (val >= 7) {
+          statusClass = 'status-alert';
+          badgeClass = 'badge-alert';
+        } else if (val >= 4) {
+          statusClass = 'status-warn';
+          badgeClass = 'badge-warn';
+        } else {
+          statusClass = 'status-good';
+          badgeClass = 'badge-good';
+        }
+      } else {
+        // Для сна, настроения, энергии: 1-3 истощение/бессонница, 4-6 норма, 7-10 ресурс
+        if (val <= 3) {
+          statusClass = 'status-alert';
+          badgeClass = 'badge-alert';
+        } else if (val <= 6) {
+          statusClass = 'status-warn';
+          badgeClass = 'badge-warn';
+        } else {
+          statusClass = 'status-good';
+          badgeClass = 'badge-good';
+        }
+      }
+
+      if (badge) {
+        badge.className = `scale-value-badge ${badgeClass}`;
+      }
+      if (desc) {
+        desc.className = statusClass;
+      }
+    };
+
     scales.forEach(item => {
       const range = document.getElementById(`${item.id}-range`);
       const badge = document.getElementById(`${item.id}-badge`);
       const desc = document.getElementById(`${item.id}-desc`);
 
       if (range && badge) {
+        // Инициализация при старте страницы
+        const initialVal = range.value;
+        badge.textContent = initialVal;
+        if (desc) desc.textContent = getDesc(item.metric, initialVal);
+        updateScaleVisuals(item.metric, initialVal, badge, desc);
+
         range.addEventListener('input', (e) => {
           const val = e.target.value;
           badge.textContent = val;
           if (desc) desc.textContent = getDesc(item.metric, val);
+          updateScaleVisuals(item.metric, val, badge, desc);
         });
       }
     });

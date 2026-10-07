@@ -146,6 +146,11 @@ def test_styles_and_responsive(ctx):
     ctx.check("Медиа-запрос для компактных телефонов @media (max-width: 480px)", "@media (max-width: 480px)" in css)
     ctx.check("Скрытие подзаголовка шапки на смартфонах", ".brand-subtitle" in css and "display: none" in css)
     ctx.check("Безопасные зоны iPhone (safe-area-inset-bottom)", "env(safe-area-inset-bottom" in css)
+    ctx.check("Стабильная минимальная высота карточки шкалы .scale-card min-height", ".scale-card" in css and "min-height:" in css)
+    ctx.check("Стабильная минимальная высота подписей шкал .scale-labels min-height", ".scale-labels" in css and "min-height:" in css)
+    ctx.check("Динамические цветовые классы бейджей (.badge-good, .badge-alert)", ".badge-good" in css and ".badge-alert" in css)
+    ctx.check("Предотвращение скачков скроллбара (scrollbar-gutter: stable)", "scrollbar-gutter: stable" in css)
+    ctx.check("Класс расширенного модального окна .modal-card-wide", ".modal-card-wide" in css)
 
 def test_pwa_and_assets(ctx):
     print("\n--- 8. Тестирование PWA манифеста и Service Worker ---")
@@ -202,6 +207,8 @@ def test_participant_management(ctx):
     ctx.check("Метод отрисовки таблицы renderAdminParticipantsTable() в app.js", "renderAdminParticipantsTable()" in app_js)
     ctx.check("Копирование карточки доступа для WhatsApp copyParticipantAccessCard()", "copyParticipantAccessCard(" in app_js)
     ctx.check("Кнопки редактирования срезов в таймлайне (.btn-edit-timeline-checkin)", "btn-edit-timeline-checkin" in app_js)
+    ctx.check("Динамическая раскраска шкал updateScaleVisuals() в app.js", "updateScaleVisuals" in app_js)
+    ctx.check("Класс modal-card-wide применен к modal-admin-entry-checkin", "modal-card modal-card-wide" in index_html)
     ctx.check("Метод фиксации очного среза с откликом ИИ handleAdminEntryCheckinSubmit()", "handleAdminEntryCheckinSubmit()" in app_js)
     ctx.check("Метод облачной синхронизации syncCloudData() в app.js", "syncCloudData()" in app_js)
 
