@@ -5,7 +5,7 @@
 
 import { APP_CONFIG } from '../js/config.js';
 import { StorageService } from '../js/storage.js';
-import { AuthService } from '../js/auth-service.js';
+import { AuthService, generateSimplePassword } from '../js/auth-service.js';
 import { AiService } from '../js/ai-service.js';
 import { ChartManager } from '../js/chart-manager.js';
 
@@ -372,6 +372,65 @@ export function registerAllTests(runner) {
 
     runner.it('Авторизация через VK для Дениса требует пароль ведущего', async () => {
       await expect(auth.loginWithVk('id468816327')).toReject('требуется ввести секретный пароль');
+    });
+
+    runner.it('Генератор простых паролей generateSimplePassword создаёт читаемый пароль с дефисом', () => {
+      const p1 = generateSimplePassword();
+      expect(typeof p1).toBe('string');
+      expect(p1.length).toBeGreaterThan(4);
+      expect(p1).toContain('-');
+    });
+
+    runner.it('Администратор регистрирует участника (adminCreateParticipant) с открытым паролем', async () => {
+      const p = await auth.adminCreateParticipant({
+        name: 'Ольга Соколова',
+        email: 'olga_sok@ritm.local',
+        password: 'ритм-55',
+        concern: 'Беспокойство по вечерам',
+        goal: 'Вернуть спокойный сон'
+      });
+      expect(p.name).toBe('Ольга Соколова');
+      expect(p.plainPassword).toBe('ритм-55');
+      expect(p.passwordHash).toBeTruthy();
+      expect(p.createdByAdmin).toBe(true);
+
+      // Проверяем, что создалась анкета
+      const survey = new StorageService().getSurveyByUserId(p.id);
+      expect(survey).toBeTruthy();
+      expect(survey.concern).toContain('Беспокойство');
+
+      // Участник может войти по этому открытому паролю
+      const logged = await auth.login('Ольга Соколова', 'ритм-55');
+      expect(logged.id).toBe(p.id);
+    });
+
+    runner.it('Администратор редактирует участника (adminUpdateParticipant)', async () => {
+      const p = await auth.adminCreateParticipant({
+        name: 'Константин',
+        password: 'старый-пароль'
+      });
+      const updated = await auth.adminUpdateParticipant(p.id, {
+        name: 'Константин П.',
+        password: 'новый-пароль-77'
+      });
+      expect(updated.name).toBe('Константин П.');
+      expect(updated.plainPassword).toBe('новый-пароль-77');
+
+      // Проверяем вход с новым паролем
+      const logged = await auth.login('Константин П.', 'новый-пароль-77');
+      expect(logged.id).toBe(p.id);
+    });
+
+    runner.it('Администратор удаляет участника (adminDeleteParticipant) с защитой ведущего', async () => {
+      const p = await auth.adminCreateParticipant({
+        name: 'Временный',
+        password: '1234'
+      });
+      expect(auth.adminDeleteParticipant(p.id)).toBe(true);
+      expect(new StorageService().getUserById(p.id)).toBeFalsy();
+
+      // Защита ведущего от удаления
+      expect(() => auth.adminDeleteParticipant('user_admin')).toThrow();
     });
   });
 

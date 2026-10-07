@@ -13,6 +13,13 @@ import os
 import sys
 import re
 
+# Обеспечиваем UTF-8 вывод в консоли Windows
+if sys.stdout.encoding != 'utf-8':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+
 PORT = 8089
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -60,15 +67,16 @@ def main():
 
     cmd = [
         edge_exe,
-        "--headless",
+        "--headless=new",
         "--disable-gpu",
-        "--virtual-time-budget=10000",
+        "--no-sandbox",
+        "--virtual-time-budget=5000",
         "--dump-dom",
         test_url
     ]
 
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=15, encoding="utf-8", errors="replace")
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=20, encoding="utf-8", errors="replace")
         html = proc.stdout
 
         # Ищем статистику в DOM
@@ -86,21 +94,21 @@ def main():
             print("-" * 70)
             print(f"ИТОГИ ТЕСТИРОВАНИЯ:")
             print(f"  Всего тестов : {total}")
-            print(f"  Успешно (✓)  : {passed}")
-            print(f"  Ошибок (✗)   : {failed}")
+            print(f"  Успешно [OK] : {passed}")
+            print(f"  Ошибок [FAIL]: {failed}")
             print(f"  Надёжность   : {rate}%")
             print("-" * 70)
 
             # Выводим названия сьютов
             suite_matches = re.findall(r'<div class="suite-header">\s*<span>([^<]+)</span>\s*<span class="suite-badge[^"]*">([^<]+)</span>', html)
             for s_name, s_badge in suite_matches:
-                print(f"  [✓] {s_name.strip()} -> {s_badge.strip()}")
+                print(f"  [OK] {s_name.strip()} -> {s_badge.strip()}")
 
             if failed == 0 and total > 0:
-                print("\n🎉 ВСЕ ТЕСТЫ ПРОЙДЕНЫ СО 100% УСПЕХОМ! Проект готов к релизу.")
+                print("\n*** ВСЕ ТЕСТЫ ПРОЙДЕНЫ СО 100% УСПЕХОМ! Проект готов к релизу. ***")
                 sys.exit(0)
             else:
-                print(f"\n⚠️ Обнаружено {failed} ошибок. Проверьте детали в браузере: {test_url}")
+                print(f"\n[!] Обнаружено {failed} ошибок. Проверьте детали в браузере: {test_url}")
                 sys.exit(1)
         else:
             print("[*] DOM получен, но тесты ещё выполнялись. Откройте в браузере:")

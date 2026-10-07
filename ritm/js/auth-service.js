@@ -13,6 +13,13 @@ async function hashPassword(password) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+export function generateSimplePassword() {
+  const words = ['ритм', 'весна', 'покой', 'мир', 'свет', 'опора', 'волна', 'сила', 'баланс', 'тишина', 'ясность', 'тепло'];
+  const word = words[Math.floor(Math.random() * words.length)];
+  const num = Math.floor(10 + Math.random() * 90);
+  return `${word}-${num}`;
+}
+
 export class AuthService {
   constructor() {
     this.currentUser = storage.getCurrentUser();
@@ -77,16 +84,29 @@ export class AuthService {
       (u.email && u.email.toLowerCase() === cleanLower)
     );
 
-    // Проверка пароля (если у пользователя есть хеш)
-    if (user && user.passwordHash) {
-      const inputHash = await hashPassword(password);
+    if (!user) {
+      throw new Error(`Пользователь "${cleanInput}" не найден. Пожалуйста, пройдите быструю регистрацию.`);
+    }
+
+    // Проверка пароля (по SHA-256 хешу либо открытому паролю)
+    let isPasswordValid = true;
+    if (user.passwordHash) {
+      const inputHash = await hashPassword(cleanPass);
       if (inputHash !== user.passwordHash) {
-        throw new Error('Неверный пароль. Попробуйте ещё раз или восстановите доступ через email.');
+        isPasswordValid = false;
+      }
+    } else if (user.plainPassword) {
+      if (user.plainPassword !== cleanPass) {
+        isPasswordValid = false;
+      } else {
+        // Кэшируем хеш для оптимизации
+        user.passwordHash = await hashPassword(cleanPass);
+        storage.saveUser(user);
       }
     }
 
-    if (!user) {
-      throw new Error(`Пользователь "${cleanInput}" не найден. Пожалуйста, пройдите быструю регистрацию.`);
+    if (!isPasswordValid) {
+      throw new Error('Неверный пароль. Попробуйте ещё раз или обратитесь к ведущему группы.');
     }
 
     this.currentUser = user;
@@ -231,6 +251,7 @@ export class AuthService {
       id: 'user_' + Date.now(),
       name: cleanName,
       email: cleanEmail,
+      plainPassword: password,
       role: 'patient',
       registeredAt: new Date().toISOString(),
       isDemo: false
@@ -241,6 +262,112 @@ export class AuthService {
     this.currentUser = newUser;
     storage.setCurrentUser(newUser);
     return newUser;
+  }
+
+  /**
+   * Регистрация участника ведущим (из кабинета администратора)
+   * Позволяет ведущему регистрировать клиента, задавать или генерировать пароль,
+   * а также видеть пароль для передачи участнику.
+   */
+  async adminCreateParticipant({ name, email, password, concern = '', goal = '' }) {
+    if (!name || !name.trim()) {
+      throw new Error('Укажите имя или никнейм участника');
+    }
+    const cleanName = name.trim();
+    const cleanLower = cleanName.toLowerCase();
+    
+    // Защита от создания учетки с именем ведущего
+    if (cleanLower.includes('казаков') || cleanLower === 'admin' || (email && email.toLowerCase() === 'denis_kazakov@mail.ru')) {
+      throw new Error('Это имя или email зарезервированы для ведущего.');
+    }
+
+    const pass = (password && password.trim().length >= 4) ? password.trim() : generateSimplePassword();
+    let userEmail = (email && email.trim()) ? email.trim().toLowerCase() : '';
+    if (!userEmail) {
+      // Создаем удобный системный логин
+      const translit = encodeURIComponent(cleanLower).replace(/%/g, '');
+      userEmail = `${translit || 'user'}_${Math.floor(100 + Math.random() * 900)}@ritm.local`;
+    }
+
+    const users = storage.getUsers();
+    if (users.some(u => u.name && u.name.toLowerCase() === cleanLower)) {
+      throw new Error(`Участник с именем «${cleanName}» уже есть в группе. Используйте уточнение (например, «${cleanName} К.»).`);
+    }
+
+    const newParticipant = {
+      id: 'user_' + Date.now(),
+      name: cleanName,
+      email: userEmail,
+      plainPassword: pass,
+      role: 'patient',
+      registeredAt: new Date().toISOString(),
+      createdByAdmin: true,
+      isDemo: false
+    };
+
+    newParticipant.passwordHash = await hashPassword(pass);
+    storage.saveUser(newParticipant);
+
+    // Если ведущий сразу заполнил первичный запрос/цель, сохраняем анкету
+    if (concern || goal) {
+      storage.saveSurvey(newParticipant.id, {
+        userId: newParticipant.id,
+        concern: concern.trim() || 'Первичный запрос зафиксирован ведущим',
+        goal: goal.trim() || 'Гармонизация эмоционального состояния',
+        duration: 'Уточняется',
+        anxiety: 5,
+        sleep: 5,
+        mood: 5,
+        energy: 5,
+        submittedAt: new Date().toISOString()
+      });
+    }
+
+    return newParticipant;
+  }
+
+  /**
+   * Редактирование участника ведущим (смена имени, email/логина или пароля)
+   */
+  async adminUpdateParticipant(userId, { name, email, password }) {
+    const user = storage.getUserById(userId);
+    if (!user) {
+      throw new Error('Участник не найден');
+    }
+    if (user.role === 'admin' || userId === 'user_admin') {
+      throw new Error('Для редактирования данных ведущего используйте раздел настроек кабинета.');
+    }
+
+    const updates = {};
+    if (name && name.trim()) {
+      updates.name = name.trim();
+    }
+    if (email && email.trim()) {
+      updates.email = email.trim().toLowerCase();
+    }
+    if (password && password.trim()) {
+      if (password.trim().length < 4) {
+        throw new Error('Пароль должен содержать не менее 4 символов');
+      }
+      updates.plainPassword = password.trim();
+      updates.passwordHash = await hashPassword(password.trim());
+    }
+
+    return storage.updateUser(userId, updates);
+  }
+
+  /**
+   * Удаление участника ведущим
+   */
+  adminDeleteParticipant(userId) {
+    if (!userId || userId === 'user_admin') {
+      throw new Error('Нельзя удалить аккаунт ведущего');
+    }
+    const user = storage.getUserById(userId);
+    if (user && user.role === 'admin') {
+      throw new Error('Нельзя удалить аккаунт ведущего');
+    }
+    return storage.deleteUser(userId);
   }
 
   /**

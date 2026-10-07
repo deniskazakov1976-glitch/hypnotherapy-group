@@ -133,6 +133,86 @@ export class FirebaseService {
     snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
     return items;
   }
+
+  /**
+   * Сохранение карточки пользователя в Firestore
+   */
+  async saveUser(user) {
+    if (!this.isInitialized || !user || !user.id) return;
+    try {
+      const { doc, setDoc } = this.firestoreMethods;
+      await setDoc(doc(this.db, 'users', user.id), user, { merge: true });
+    } catch (e) {
+      console.warn('Firebase: ошибка сохранения пользователя', e);
+    }
+  }
+
+  /**
+   * Удаление пользователя из Firestore
+   */
+  async deleteUser(userId) {
+    if (!this.isInitialized || !userId) return;
+    try {
+      const { doc, setDoc } = this.firestoreMethods;
+      await setDoc(doc(this.db, 'users', userId), { deleted: true, deletedAt: new Date().toISOString() }, { merge: true });
+    } catch (e) {
+      console.warn('Firebase: ошибка удаления пользователя', e);
+    }
+  }
+
+  /**
+   * Полная двусторонняя синхронизация с облаком (Firebase Firestore)
+   */
+  async syncAll(localState) {
+    if (!this.isInitialized) {
+      return { success: false, reason: 'not_initialized', localState };
+    }
+
+    try {
+      const { collection, getDocs, doc, setDoc } = this.firestoreMethods;
+      
+      // 1. Отправляем локальных пользователей в облако
+      for (const u of localState.users || []) {
+        await setDoc(doc(this.db, 'users', u.id), u, { merge: true });
+      }
+
+      // 2. Отправляем анкеты
+      for (const uid in localState.surveys || {}) {
+        await setDoc(doc(this.db, 'surveys', uid), localState.surveys[uid], { merge: true });
+      }
+
+      // 3. Отправляем чек-ины
+      for (const uid in localState.checkins || {}) {
+        for (const chk of localState.checkins[uid] || []) {
+          const chkId = chk.id || 'chk_' + Date.now();
+          await setDoc(doc(this.db, 'checkins', uid, 'items', chkId), chk, { merge: true });
+        }
+      }
+
+      // 4. Подтягиваем актуальные данные из облака
+      const usersSnap = await getDocs(collection(this.db, 'users'));
+      const remoteUsers = [];
+      usersSnap.forEach(d => {
+        const data = d.data();
+        if (!data.deleted) remoteUsers.push({ id: d.id, ...data });
+      });
+
+      const surveysSnap = await getDocs(collection(this.db, 'surveys'));
+      const remoteSurveys = {};
+      surveysSnap.forEach(d => { remoteSurveys[d.id] = d.data(); });
+
+      return {
+        success: true,
+        users: remoteUsers.length > 0 ? remoteUsers : localState.users,
+        surveys: Object.keys(remoteSurveys).length > 0 ? remoteSurveys : localState.surveys,
+        checkins: localState.checkins,
+        syncedAt: new Date().toISOString()
+      };
+    } catch (err) {
+      console.warn('Firebase sync error:', err);
+      return { success: false, error: err.message, localState };
+    }
+  }
 }
 
 export const firebaseService = new FirebaseService();

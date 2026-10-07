@@ -402,7 +402,7 @@
       <div id="therapist-crisis-alerts-container"></div>
 
       <!-- Сводка всей группы (Group Pulse Overview на одном экране) -->
-      <div style="margin-bottom: 8px;">
+      <div style="margin-bottom: 20px;">
         <h2 style="font-size: 1.05rem; font-weight: 700; color: var(--color-primary); margin-bottom: 10px;">
           👥 Состояние группы в целом (3–5 участников)
         </h2>
@@ -411,7 +411,45 @@
         </div>
       </div>
 
-      <!-- Вкладки участников группы -->
+      <!-- ====================================================================
+           БЛОК АДМИНИСТРИРОВАНИЯ УЧАСТНИКОВ ГРУППЫ
+           (Регистрация, пароли, логины, опрос на шеринге и синхронизация)
+           ==================================================================== -->
+      <div class="card admin-participants-card" style="margin-bottom: 24px;">
+        <div class="card-header" style="flex-wrap: wrap; gap: 12px; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 14px; margin-bottom: 16px;">
+          <div>
+            <h2 class="card-title" style="font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+              <span>👥</span> Администрирование участников группы
+            </h2>
+            <p class="card-subtitle">
+              Управление доступом, просмотр логинов/паролей, опрос на встрече и синхронизация
+            </p>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-left: auto;">
+            <span id="cloud-sync-status-badge" class="cloud-sync-badge synced" title="Статус синхронизации">
+              🟢 Данные сохранены
+            </span>
+            <button type="button" id="btn-admin-sync-cloud" class="btn btn-outline btn-sm">
+              🔄 Синхронизировать
+            </button>
+            <button type="button" id="btn-admin-add-participant" class="btn btn-accent btn-sm">
+              ➕ Зарегистрировать участника
+            </button>
+          </div>
+        </div>
+
+        <!-- Таблица участников (десктопная верстка с карточками для мобильного) -->
+        <div id="admin-participants-table-container">
+          <!-- Заполняется динамически через renderAdminParticipantsTable() -->
+        </div>
+      </div>
+
+      <!-- Вкладки участников группы для детального досье -->
+      <div style="margin-bottom: 8px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--color-primary); margin-bottom: 10px;">
+          📋 Подробное досье и динамика участника
+        </h3>
+      </div>
       <div class="therapist-nav" id="therapist-tabs">
         <!-- Генерируется из списка участников -->
       </div>
@@ -615,6 +653,225 @@
               Сохранить чек-ин и получить отклик ✨
             </button>
           </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       МОДАЛЬНОЕ ОКНО: РЕГИСТРАЦИЯ НОВОГО УЧАСТНИКА ВЕДУЩИМ
+       ==================================================================== -->
+  <div id="modal-admin-add-participant" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 520px;">
+      <button class="modal-close-btn" id="modal-admin-add-close">&times;</button>
+      
+      <div class="card-header" style="margin-bottom: 16px;">
+        <div>
+          <h2 class="card-title">➕ Регистрация участника группы</h2>
+          <p class="card-subtitle">Создание доступа для личного дневника «Мой ритм»</p>
+        </div>
+      </div>
+
+      <form id="form-admin-add-participant">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" for="admin-add-name">Имя или псевдоним участника *</label>
+          <input type="text" id="admin-add-name" class="form-input" placeholder="Например: Ольга, Михаил К." required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" for="admin-add-login">Логин для входа (Email или телефон)</label>
+          <input type="text" id="admin-add-login" class="form-input" placeholder="например, olga@mail.ru или +79001234567">
+          <div class="form-hint">Если оставить пустым, логин создастся автоматически по имени</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" for="admin-add-pass">Пароль для входа *</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="admin-add-pass" class="form-input" placeholder="Введите пароль (мин. 4 знака)" required style="font-family: monospace; font-size: 1.02rem; font-weight: 600;">
+            <button type="button" id="btn-admin-gen-pass-add" class="btn btn-outline" style="white-space: nowrap; flex-shrink: 0;" title="Сгенерировать простой запоминающийся пароль">
+              🎲 Сгенерировать
+            </button>
+          </div>
+          <div class="form-hint">Участник сможет легко ввести этот пароль на телефоне (например, «ритм-42» или «1234»)</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" for="admin-add-concern">Первичный запрос / Проблема (по желанию)</label>
+          <textarea id="admin-add-concern" class="form-textarea" rows="2" placeholder="С чем пришёл участник: тревога, нарушение сна, панические реакции..."></textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label class="form-label" for="admin-add-goal">Цель терапии (по желанию)</label>
+          <input type="text" id="admin-add-goal" class="form-input" placeholder="Например: вернуть спокойный глубокий сон, снять мышечные зажимы">
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button type="submit" class="btn btn-primary btn-full" id="btn-admin-save-participant">
+            💾 Зарегистрировать участника
+          </button>
+          <button type="button" class="btn btn-accent btn-full" id="btn-admin-save-and-copy">
+            📋 Сохранить и скопировать карточку для WhatsApp
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       МОДАЛЬНОЕ ОКНО: РЕДАКТИРОВАНИЕ УЧАСТНИКА ВЕДУЩИМ
+       ==================================================================== -->
+  <div id="modal-admin-edit-participant" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 480px;">
+      <button class="modal-close-btn" id="modal-admin-edit-close">&times;</button>
+      
+      <div class="card-header" style="margin-bottom: 16px;">
+        <div>
+          <h2 class="card-title">✏️ Редактирование участника</h2>
+          <p class="card-subtitle">Изменение данных профиля и пароля доступа</p>
+        </div>
+      </div>
+
+      <form id="form-admin-edit-participant">
+        <input type="hidden" id="admin-edit-id">
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" for="admin-edit-name">Имя или псевдоним *</label>
+          <input type="text" id="admin-edit-name" class="form-input" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" for="admin-edit-login">Логин (Email / Телефон)</label>
+          <input type="text" id="admin-edit-login" class="form-input" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label class="form-label" for="admin-edit-pass">Пароль участника</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="admin-edit-pass" class="form-input" placeholder="Оставьте прежним или измените" style="font-family: monospace; font-size: 1.02rem; font-weight: 600;">
+            <button type="button" id="btn-admin-gen-pass-edit" class="btn btn-outline" style="white-space: nowrap; flex-shrink: 0;">
+              🎲 Новый
+            </button>
+          </div>
+          <div class="form-hint">Вы можете изменить пароль или напомнить его участнику</div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn btn-outline" id="btn-admin-edit-cancel" style="flex: 1;">
+            Отмена
+          </button>
+          <button type="submit" class="btn btn-primary" style="flex: 2;">
+            💾 Сохранить изменения
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       МОДАЛЬНОЕ ОКНО: ОЧНЫЙ СРЕЗ СОСТОЯНИЯ НА ГРУППЕ (ШЕРИНГ)
+       ==================================================================== -->
+  <div id="modal-admin-entry-checkin" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 600px;">
+      <button class="modal-close-btn" id="modal-admin-entry-close">&times;</button>
+      
+      <div class="card-header" style="margin-bottom: 14px;">
+        <div>
+          <h2 class="card-title">✍️ Экспресс-срез на группе: <span id="admin-entry-name" style="color: var(--color-accent);">Участник</span></h2>
+          <p class="card-subtitle">Фиксация состояния на шеринге с анализом нейросети AnyModel</p>
+        </div>
+      </div>
+
+      <form id="form-admin-entry-checkin">
+        <input type="hidden" id="admin-entry-user-id">
+
+        <!-- 4 Шкалы состояния -->
+        <div class="scales-grid" style="margin: 6px 0 16px;">
+          <!-- Тревожность -->
+          <div class="scale-card">
+            <div class="scale-card-header">
+              <span class="scale-name">🌊 Тревожность (↓ лучше)</span>
+              <span class="scale-value-badge" id="admin-chk-anxiety-badge">5</span>
+            </div>
+            <input type="range" min="1" max="10" value="5" class="scale-slider" id="admin-chk-anxiety-range">
+            <div class="scale-labels">
+              <span>1: Спокойно</span>
+              <span id="admin-chk-anxiety-desc">5: Умеренно</span>
+              <span>10: Паника</span>
+            </div>
+          </div>
+
+          <!-- Сон -->
+          <div class="scale-card">
+            <div class="scale-card-header">
+              <span class="scale-name">🌙 Сон (↑ лучше)</span>
+              <span class="scale-value-badge" id="admin-chk-sleep-badge">5</span>
+            </div>
+            <input type="range" min="1" max="10" value="5" class="scale-slider" id="admin-chk-sleep-range">
+            <div class="scale-labels">
+              <span>1: Бессонница</span>
+              <span id="admin-chk-sleep-desc">5: Удовлетворительный</span>
+              <span>10: Глубокий</span>
+            </div>
+          </div>
+
+          <!-- Настроение -->
+          <div class="scale-card">
+            <div class="scale-card-header">
+              <span class="scale-name">🌿 Настроение (↑ лучше)</span>
+              <span class="scale-value-badge" id="admin-chk-mood-badge">5</span>
+            </div>
+            <input type="range" min="1" max="10" value="5" class="scale-slider" id="admin-chk-mood-range">
+            <div class="scale-labels">
+              <span>1: Подавленность</span>
+              <span id="admin-chk-mood-desc">5: Ровное</span>
+              <span>10: Подъем</span>
+            </div>
+          </div>
+
+          <!-- Энергия -->
+          <div class="scale-card">
+            <div class="scale-card-header">
+              <span class="scale-name">⚡ Энергия (↑ лучше)</span>
+              <span class="scale-value-badge" id="admin-chk-energy-badge">5</span>
+            </div>
+            <input type="range" min="1" max="10" value="5" class="scale-slider" id="admin-chk-energy-range">
+            <div class="scale-labels">
+              <span>1: Истощение</span>
+              <span id="admin-chk-energy-desc">5: Хватает на рутину</span>
+              <span>10: Полон сил</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="admin-chk-notes">
+            Слова участника на шеринге / Заметки ведущего
+          </label>
+          <textarea id="admin-chk-notes" class="form-textarea" rows="2" placeholder="Что происходит в теле и эмоциях, какие вызовы были на неделе..."></textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" for="admin-chk-insights">
+            Ключевой инсайт / Телесный отклик
+          </label>
+          <input type="text" id="admin-chk-insights" class="form-input" placeholder="Например: удалось отпустить гиперконтроль, дыхание помогло в стрессе...">
+        </div>
+
+        <!-- Опция генерации отклика ИИ -->
+        <div style="background: var(--color-bg-alt); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 18px; display: flex; align-items: center; gap: 10px;">
+          <input type="checkbox" id="admin-chk-ai-enabled" checked style="width: 18px; height: 18px; accent-color: var(--color-accent); cursor: pointer;">
+          <label for="admin-chk-ai-enabled" style="font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--color-primary);">
+            ✨ Запросить поддерживающий отклик нейросети AnyModel (nemotron-3-ultra-550b)
+          </label>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn btn-outline" id="btn-admin-entry-cancel" style="flex: 1;">
+            Отмена
+          </button>
+          <button type="submit" class="btn btn-primary" id="btn-admin-entry-submit" style="flex: 2;">
+            ✨ Сохранить срез и запросить отклик
+          </button>
         </div>
       </form>
     </div>

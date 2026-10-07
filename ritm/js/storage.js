@@ -11,7 +11,8 @@ const STORAGE_KEYS = {
   SURVEYS: 'moy_ritm_surveys',
   CHECKINS: 'moy_ritm_checkins',
   AI_SETTINGS: 'moy_ritm_ai_settings',
-  FIREBASE_CONFIG: 'moy_ritm_firebase_config'
+  FIREBASE_CONFIG: 'moy_ritm_firebase_config',
+  CLOUD_SYNC: 'moy_ritm_cloud_sync'
 };
 
 // Начальные демонстрационные данные (группа из 3 участников + терапевт)
@@ -27,6 +28,8 @@ const INITIAL_DEMO_USERS = [
   {
     id: 'user_anna',
     name: 'Анна',
+    email: 'anna@ritm.local',
+    plainPassword: 'ритм-42',
     role: 'patient',
     registeredAt: '2026-09-28T14:30:00Z',
     isDemo: true
@@ -34,6 +37,8 @@ const INITIAL_DEMO_USERS = [
   {
     id: 'user_mikhail',
     name: 'Михаил',
+    email: 'mikhail@ritm.local',
+    plainPassword: 'мир-77',
     role: 'patient',
     registeredAt: '2026-09-28T16:00:00Z',
     isDemo: true
@@ -41,6 +46,8 @@ const INITIAL_DEMO_USERS = [
   {
     id: 'user_elena',
     name: 'Елена',
+    email: 'elena@ritm.local',
+    plainPassword: 'весна-18',
     role: 'patient',
     registeredAt: '2026-09-29T11:20:00Z',
     isDemo: true
@@ -225,6 +232,42 @@ export class StorageService {
     return user;
   }
 
+  updateUser(id, updatedFields) {
+    const users = this.getUsers();
+    const idx = users.findIndex(u => u.id === id);
+    if (idx >= 0) {
+      users[idx] = { ...users[idx], ...updatedFields, updatedAt: new Date().toISOString() };
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+      return users[idx];
+    }
+    return null;
+  }
+
+  deleteUser(id) {
+    if (!id || id === 'user_admin') return false;
+    const users = this.getUsers().filter(u => u.id !== id);
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+    // Очищаем привязанную анкету и чек-ины
+    const surveys = this.getSurveys();
+    if (surveys[id]) {
+      delete surveys[id];
+      localStorage.setItem(STORAGE_KEYS.SURVEYS, JSON.stringify(surveys));
+    }
+
+    const checkins = this.getAllCheckins();
+    if (checkins[id]) {
+      delete checkins[id];
+      localStorage.setItem(STORAGE_KEYS.CHECKINS, JSON.stringify(checkins));
+    }
+
+    return true;
+  }
+
+  getPatientParticipants() {
+    return this.getUsers().filter(u => u.role === 'patient');
+  }
+
   // Текущая сессия
   getCurrentUser() {
     try {
@@ -359,6 +402,27 @@ export class StorageService {
 
   saveFirebaseConfig(cfg) {
     localStorage.setItem(STORAGE_KEYS.FIREBASE_CONFIG, JSON.stringify(cfg));
+  }
+
+  // Настройки облачной синхронизации (Cloud Sync)
+  getCloudSyncConfig() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.CLOUD_SYNC);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Error reading Cloud Sync config:', e);
+    }
+    return {
+      enabled: false,
+      cloudEndpoint: '',
+      groupId: 'ritm_kazakov_group',
+      lastSyncedAt: null,
+      status: 'local' // 'synced' | 'local' | 'syncing' | 'error'
+    };
+  }
+
+  saveCloudSyncConfig(cfg) {
+    localStorage.setItem(STORAGE_KEYS.CLOUD_SYNC, JSON.stringify(cfg));
   }
 
   // Экспорт / Импорт

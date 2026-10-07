@@ -163,6 +163,44 @@ def test_pwa_and_assets(ctx):
         p = os.path.join(BASE_DIR, asset)
         ctx.check(f"Файл ассета существует: {asset}", os.path.exists(p) and os.path.getsize(p) > 0)
 
+def test_participant_management(ctx):
+    print("\n--- 9. Тестирование администрирования участников и синхронизации ---")
+    auth_content = read_file('js/auth-service.js')
+    storage_content = read_file('js/storage.js')
+    index_html = read_file('index.html')
+    styles_css = read_file('styles.css')
+    app_js = read_file('js/app.js')
+
+    # Методы AuthService
+    ctx.check("Генератор простых паролей generateSimplePassword() экспортирован", "export function generateSimplePassword()" in auth_content)
+    ctx.check("Метод регистрации участника ведущим adminCreateParticipant()", "adminCreateParticipant(" in auth_content)
+    ctx.check("Метод редактирования участника adminUpdateParticipant()", "adminUpdateParticipant(" in auth_content)
+    ctx.check("Метод удаления участника adminDeleteParticipant() с защитой ведущего", "adminDeleteParticipant(" in auth_content and "user_admin" in auth_content)
+
+    # Методы StorageService
+    ctx.check("Метод удаления пользователя deleteUser() в storage.js", "deleteUser(" in storage_content)
+    ctx.check("Метод обновления пользователя updateUser() в storage.js", "updateUser(" in storage_content)
+    ctx.check("Конфигурация облачной синхронизации getCloudSyncConfig()", "getCloudSyncConfig()" in storage_content)
+
+    # UI элементы и модальные окна в index.html
+    ctx.check("Контейнер таблицы участников admin-participants-table-container", 'id="admin-participants-table-container"' in index_html)
+    ctx.check("Модальное окно регистрации участника modal-admin-add-participant", 'id="modal-admin-add-participant"' in index_html)
+    ctx.check("Модальное окно редактирования участника modal-admin-edit-participant", 'id="modal-admin-edit-participant"' in index_html)
+    ctx.check("Модальное окно очного среза на группе modal-admin-entry-checkin", 'id="modal-admin-entry-checkin"' in index_html)
+    ctx.check("Бейдж статуса синхронизации cloud-sync-status-badge", 'id="cloud-sync-status-badge"' in index_html)
+
+    # Стилистика в styles.css
+    ctx.check("Стили десктопной таблицы участников .admin-table", ".admin-table" in styles_css)
+    ctx.check("Стили плашки пароля с моноширинным шрифтом .admin-pass-box", ".admin-pass-box" in styles_css)
+    ctx.check("Стили индикатора облачной синхронизации .cloud-sync-badge", ".cloud-sync-badge" in styles_css)
+    ctx.check("Мобильная трансформация таблицы в карточки @media (max-width: 860px)", "@media (max-width: 860px)" in styles_css)
+
+    # Контроллер app.js
+    ctx.check("Метод отрисовки таблицы renderAdminParticipantsTable() в app.js", "renderAdminParticipantsTable()" in app_js)
+    ctx.check("Копирование карточки доступа для WhatsApp copyParticipantAccessCard()", "copyParticipantAccessCard(" in app_js)
+    ctx.check("Метод фиксации очного среза с откликом ИИ handleAdminEntryCheckinSubmit()", "handleAdminEntryCheckinSubmit()" in app_js)
+    ctx.check("Метод облачной синхронизации syncCloudData() в app.js", "syncCloudData()" in app_js)
+
 def main():
     print("=" * 70)
     print("   МОЙ РИТМ: Полный аудит кода и верификация всех модулей")
@@ -178,6 +216,7 @@ def main():
     test_app_and_ui(ctx)
     test_styles_and_responsive(ctx)
     test_pwa_and_assets(ctx)
+    test_participant_management(ctx)
     
     print("\n" + "=" * 70)
     print("\n" + "=" * 70)

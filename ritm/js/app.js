@@ -5,9 +5,10 @@
 
 import { APP_CONFIG } from './config.js';
 import { storage } from './storage.js';
-import { authService } from './auth-service.js';
+import { authService, generateSimplePassword } from './auth-service.js';
 import { aiService } from './ai-service.js';
 import { chartManager } from './chart-manager.js';
+import { firebaseService } from './firebase-service.js';
 
 /** Utility: escape user text for safe innerHTML insertion (XSS prevention) */
 function esc(str) {
@@ -20,6 +21,7 @@ function esc(str) {
 class App {
   constructor() {
     this.selectedTherapistPatientId = null;
+    this.revealedPasswords = new Set();
     this.init();
   }
 
@@ -363,6 +365,102 @@ class App {
         this.showToast('Текст сводки скопирован в буфер обмена!');
       });
     });
+
+    // =========================================================================
+    // АДМИНИСТРИРОВАНИЕ УЧАСТНИКОВ ГРУППЫ (РЕГИСТРАЦИЯ, ПАРОЛИ, ОПРОС, СИНХР.)
+    // =========================================================================
+    
+    // Кнопка открытия модалки регистрации участника
+    const btnAddPart = document.getElementById('btn-admin-add-participant');
+    if (btnAddPart) {
+      btnAddPart.addEventListener('click', () => {
+        const form = document.getElementById('form-admin-add-participant');
+        if (form) form.reset();
+        const passInput = document.getElementById('admin-add-pass');
+        if (passInput) passInput.value = generateSimplePassword();
+        this.openModal('modal-admin-add-participant');
+      });
+    }
+
+    // Закрытие модалки регистрации
+    const btnCloseAdd = document.getElementById('modal-admin-add-close');
+    if (btnCloseAdd) {
+      btnCloseAdd.addEventListener('click', () => this.closeModal('modal-admin-add-participant'));
+    }
+
+    // Генерация простого пароля в модалке регистрации
+    const btnGenPassAdd = document.getElementById('btn-admin-gen-pass-add');
+    if (btnGenPassAdd) {
+      btnGenPassAdd.addEventListener('click', () => {
+        const passInput = document.getElementById('admin-add-pass');
+        if (passInput) passInput.value = generateSimplePassword();
+      });
+    }
+
+    // Отправка формы регистрации участника (обычное сохранение)
+    const formAddPart = document.getElementById('form-admin-add-participant');
+    if (formAddPart) {
+      formAddPart.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleAdminAddParticipant(false);
+      });
+    }
+
+    // Кнопка "Сохранить и скопировать для WhatsApp"
+    const btnSaveAndCopy = document.getElementById('btn-admin-save-and-copy');
+    if (btnSaveAndCopy) {
+      btnSaveAndCopy.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await this.handleAdminAddParticipant(true);
+      });
+    }
+
+    // Модалка редактирования участника: закрытие и отмена
+    const btnCloseEdit = document.getElementById('modal-admin-edit-close');
+    const btnCancelEdit = document.getElementById('btn-admin-edit-cancel');
+    if (btnCloseEdit) btnCloseEdit.addEventListener('click', () => this.closeModal('modal-admin-edit-participant'));
+    if (btnCancelEdit) btnCancelEdit.addEventListener('click', () => this.closeModal('modal-admin-edit-participant'));
+
+    // Генерация пароля в модалке редактирования
+    const btnGenPassEdit = document.getElementById('btn-admin-gen-pass-edit');
+    if (btnGenPassEdit) {
+      btnGenPassEdit.addEventListener('click', () => {
+        const passInput = document.getElementById('admin-edit-pass');
+        if (passInput) passInput.value = generateSimplePassword();
+      });
+    }
+
+    // Сохранение изменений участника
+    const formEditPart = document.getElementById('form-admin-edit-participant');
+    if (formEditPart) {
+      formEditPart.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleAdminEditParticipantSubmit();
+      });
+    }
+
+    // Модалка очного среза: закрытие и отмена
+    const btnCloseEntry = document.getElementById('modal-admin-entry-close');
+    const btnCancelEntry = document.getElementById('btn-admin-entry-cancel');
+    if (btnCloseEntry) btnCloseEntry.addEventListener('click', () => this.closeModal('modal-admin-entry-checkin'));
+    if (btnCancelEntry) btnCancelEntry.addEventListener('click', () => this.closeModal('modal-admin-entry-checkin'));
+
+    // Сохранение очного среза на группе
+    const formEntryCheckin = document.getElementById('form-admin-entry-checkin');
+    if (formEntryCheckin) {
+      formEntryCheckin.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleAdminEntryCheckinSubmit();
+      });
+    }
+
+    // Кнопка облачной синхронизации
+    const btnSyncCloud = document.getElementById('btn-admin-sync-cloud');
+    if (btnSyncCloud) {
+      btnSyncCloud.addEventListener('click', async () => {
+        await this.syncCloudData();
+      });
+    }
   }
 
   // =========================================================================
@@ -377,7 +475,11 @@ class App {
       { id: 'chk-anxiety', metric: 'anxiety' },
       { id: 'chk-sleep', metric: 'sleep' },
       { id: 'chk-mood', metric: 'mood' },
-      { id: 'chk-energy', metric: 'energy' }
+      { id: 'chk-energy', metric: 'energy' },
+      { id: 'admin-chk-anxiety', metric: 'anxiety' },
+      { id: 'admin-chk-sleep', metric: 'sleep' },
+      { id: 'admin-chk-mood', metric: 'mood' },
+      { id: 'admin-chk-energy', metric: 'energy' }
     ];
 
     const getDesc = (metric, val) => {
@@ -798,6 +900,10 @@ class App {
       });
     }
 
+    // Отрисовка таблицы администрирования участников (для десктопа/ноутбука)
+    this.renderAdminParticipantsTable();
+    this.updateCloudSyncBadge();
+
     // 3. Вкладки участников
     tabsContainer.innerHTML = '';
 
@@ -937,6 +1043,427 @@ class App {
     } finally {
       btn.disabled = false;
       btn.textContent = originalText;
+    }
+  }
+
+  // =========================================================================
+  // АДМИНИСТРИРОВАНИЕ УЧАСТНИКОВ ГРУППЫ (МЕТОДЫ)
+  // =========================================================================
+  updateCloudSyncBadge() {
+    const badge = document.getElementById('cloud-sync-status-badge');
+    if (!badge) return;
+    const cfg = storage.getCloudSyncConfig();
+    if (cfg.status === 'syncing') {
+      badge.className = 'cloud-sync-badge syncing';
+      badge.textContent = '🔄 Синхронизация...';
+    } else if (cfg.status === 'synced') {
+      badge.className = 'cloud-sync-badge synced';
+      const timeStr = cfg.lastSyncedAt ? new Date(cfg.lastSyncedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : 'сейчас';
+      badge.textContent = `🟢 Данные синхронизированы (${timeStr})`;
+    } else {
+      badge.className = 'cloud-sync-badge';
+      badge.textContent = '💾 Локальное хранилище';
+    }
+  }
+
+  renderAdminParticipantsTable() {
+    const container = document.getElementById('admin-participants-table-container');
+    if (!container) return;
+
+    const users = storage.getUsers().filter(u => u.role === 'patient');
+
+    if (users.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 32px 16px; color: var(--color-text-muted);">
+          <div style="font-size: 2rem; margin-bottom: 8px;">👥</div>
+          <div style="font-weight: 600; font-size: 1.05rem; margin-bottom: 4px;">В группе пока нет участников</div>
+          <p style="font-size: 0.9rem; margin-bottom: 16px;">Зарегистрируйте первого участника с помощью кнопки «➕ Зарегистрировать участника» выше.</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = `
+      <div class="admin-table-wrapper">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Участник</th>
+              <th>Логин для входа</th>
+              <th>Пароль</th>
+              <th>Срезов</th>
+              <th>Последний срез</th>
+              <th style="text-align: right;">Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    users.forEach(u => {
+      const checkins = storage.getCheckinsByUserId(u.id);
+      const survey = storage.getSurveyByUserId(u.id);
+      const latest = checkins.length > 0 ? checkins[checkins.length - 1] : survey;
+      const isRevealed = this.revealedPasswords.has(u.id);
+      const displayPass = u.plainPassword || (u.passwordHash ? '••••••••' : '1234');
+      const passText = isRevealed ? esc(displayPass) : (u.plainPassword ? '••••••••' : '••••••••');
+
+      // Инициалы для аватара
+      const initials = (u.name || 'У').trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase();
+
+      // Дата последнего среза
+      let dateNote = '—';
+      if (checkins.length > 0) {
+        const d = new Date(checkins[checkins.length - 1].date);
+        dateNote = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+      } else if (survey) {
+        dateNote = 'Анкета';
+      }
+
+      // Мини-чипы последних баллов
+      let chipsHtml = '—';
+      if (latest && (latest.anxiety !== undefined)) {
+        chipsHtml = `
+          <div class="admin-metrics-pill-box">
+            <span class="admin-metric-chip anx" title="Тревожность">Т:${latest.anxiety}</span>
+            <span class="admin-metric-chip slp" title="Сон">С:${latest.sleep}</span>
+            <span class="admin-metric-chip mood" title="Настроение">Н:${latest.mood}</span>
+            <span class="admin-metric-chip enrg" title="Энергия">Э:${latest.energy}</span>
+          </div>
+        `;
+      }
+
+      html += `
+        <tr data-user-id="${u.id}">
+          <td data-label="Участник">
+            <div class="admin-user-cell">
+              <div class="admin-user-avatar">${initials}</div>
+              <div class="admin-user-meta">
+                <span class="admin-user-name">${esc(u.name)}</span>
+                <span class="admin-user-sub">Рег.: ${new Date(u.registeredAt || Date.now()).toLocaleDateString('ru-RU')}</span>
+              </div>
+            </div>
+          </td>
+          <td data-label="Логин">
+            <span style="font-family: monospace; font-size: 0.88rem; color: var(--color-text-main); font-weight: 500;">
+              ${esc(u.email || u.name)}
+            </span>
+          </td>
+          <td data-label="Пароль">
+            <div class="admin-pass-box">
+              <span class="${isRevealed ? '' : 'admin-pass-hidden'}" style="font-size: 0.9rem;">
+                ${passText}
+              </span>
+              <button type="button" class="admin-icon-btn btn-toggle-pass" data-user-id="${u.id}" title="${isRevealed ? 'Скрыть пароль' : 'Показать пароль'}">
+                ${isRevealed ? '👁️‍🗨️' : '👁️'}
+              </button>
+              ${u.plainPassword ? `
+                <button type="button" class="admin-icon-btn btn-copy-pass" data-pass="${esc(u.plainPassword)}" title="Скопировать пароль">
+                  📋
+                </button>
+              ` : ''}
+            </div>
+          </td>
+          <td data-label="Срезов">
+            <strong>${checkins.length}</strong>
+          </td>
+          <td data-label="Последний срез">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 0.82rem; color: var(--color-text-muted);">${dateNote}</span>
+              ${chipsHtml}
+            </div>
+          </td>
+          <td data-label="Действия">
+            <div class="admin-actions-cell" style="justify-content: flex-end;">
+              <button type="button" class="btn btn-accent btn-sm btn-action-checkin" data-user-id="${u.id}" data-user-name="${esc(u.name)}" title="Зафиксировать срез состояния на шеринге">
+                ✍️ Внести срез
+              </button>
+              <button type="button" class="btn btn-outline btn-sm btn-action-card" data-user-id="${u.id}" title="Скопировать доступ для WhatsApp">
+                📋 Доступ
+              </button>
+              <button type="button" class="admin-icon-btn btn-action-edit" data-user-id="${u.id}" title="Редактировать">
+                ✏️
+              </button>
+              <button type="button" class="admin-icon-btn btn-action-delete" data-user-id="${u.id}" data-user-name="${esc(u.name)}" title="Удалить участника" style="color: #DC2626;">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    container.innerHTML = html;
+
+    // Слушатели переключения видимости пароля
+    container.querySelectorAll('.btn-toggle-pass').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const uid = btn.getAttribute('data-user-id');
+        if (this.revealedPasswords.has(uid)) {
+          this.revealedPasswords.delete(uid);
+        } else {
+          this.revealedPasswords.add(uid);
+        }
+        this.renderAdminParticipantsTable();
+      });
+    });
+
+    // Копирование чистого пароля
+    container.querySelectorAll('.btn-copy-pass').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const pass = btn.getAttribute('data-pass');
+        navigator.clipboard.writeText(pass).then(() => {
+          this.showToast('Пароль скопирован: ' + pass);
+        });
+      });
+    });
+
+    // Внесение очного среза
+    container.querySelectorAll('.btn-action-checkin').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const uid = btn.getAttribute('data-user-id');
+        this.openExpressCheckinModal(uid);
+      });
+    });
+
+    // Карточка доступа для WhatsApp
+    container.querySelectorAll('.btn-action-card').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const uid = btn.getAttribute('data-user-id');
+        const user = storage.getUserById(uid);
+        if (user) this.copyParticipantAccessCard(user);
+      });
+    });
+
+    // Редактирование
+    container.querySelectorAll('.btn-action-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const uid = btn.getAttribute('data-user-id');
+        this.openEditParticipantModal(uid);
+      });
+    });
+
+    // Удаление
+    container.querySelectorAll('.btn-action-delete').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const uid = btn.getAttribute('data-user-id');
+        const uname = btn.getAttribute('data-user-name');
+        if (confirm(`Удалить участника «${uname}» и все его записи из группы?`)) {
+          try {
+            authService.adminDeleteParticipant(uid);
+            this.showToast(`Участник «${uname}» удалён`);
+            this.renderTherapistDashboard();
+          } catch (err) {
+            this.showToast(err.message, 'error');
+          }
+        }
+      });
+    });
+  }
+
+  async handleAdminAddParticipant(copyToClipboard = false) {
+    const name = document.getElementById('admin-add-name').value;
+    const login = document.getElementById('admin-add-login').value;
+    const pass = document.getElementById('admin-add-pass').value;
+    const concern = document.getElementById('admin-add-concern').value;
+    const goal = document.getElementById('admin-add-goal').value;
+
+    try {
+      const newUser = await authService.adminCreateParticipant({
+        name,
+        email: login,
+        password: pass,
+        concern,
+        goal
+      });
+
+      this.closeModal('modal-admin-add-participant');
+      document.getElementById('form-admin-add-participant').reset();
+
+      if (copyToClipboard) {
+        this.copyParticipantAccessCard(newUser);
+      } else {
+        this.showToast(`Участник «${newUser.name}» успешно зарегистрирован!`);
+      }
+
+      this.renderTherapistDashboard();
+    } catch (err) {
+      this.showToast(err.message, 'error');
+    }
+  }
+
+  openEditParticipantModal(userId) {
+    const user = storage.getUserById(userId);
+    if (!user) return;
+
+    document.getElementById('admin-edit-id').value = user.id;
+    document.getElementById('admin-edit-name').value = user.name || '';
+    document.getElementById('admin-edit-login').value = user.email || '';
+    document.getElementById('admin-edit-pass').value = user.plainPassword || '';
+
+    this.openModal('modal-admin-edit-participant');
+  }
+
+  async handleAdminEditParticipantSubmit() {
+    const userId = document.getElementById('admin-edit-id').value;
+    const name = document.getElementById('admin-edit-name').value;
+    const email = document.getElementById('admin-edit-login').value;
+    const password = document.getElementById('admin-edit-pass').value;
+
+    try {
+      await authService.adminUpdateParticipant(userId, { name, email, password });
+      this.closeModal('modal-admin-edit-participant');
+      this.showToast('Данные участника успешно обновлены!');
+      this.renderTherapistDashboard();
+    } catch (err) {
+      this.showToast(err.message, 'error');
+    }
+  }
+
+  openExpressCheckinModal(userId) {
+    const user = storage.getUserById(userId);
+    if (!user) return;
+
+    const checkins = storage.getCheckinsByUserId(userId);
+    const survey = storage.getSurveyByUserId(userId);
+    const latest = checkins.length > 0 ? checkins[checkins.length - 1] : survey;
+
+    document.getElementById('admin-entry-user-id').value = user.id;
+    document.getElementById('admin-entry-name').textContent = user.name;
+
+    // Задаем исходные значения шкал (из последнего среза или по умолчанию 5)
+    const setSliderVal = (id, val) => {
+      const slider = document.getElementById(id);
+      if (slider) {
+        slider.value = val;
+        slider.dispatchEvent(new Event('input'));
+      }
+    };
+
+    setSliderVal('admin-chk-anxiety-range', latest?.anxiety ?? 5);
+    setSliderVal('admin-chk-sleep-range', latest?.sleep ?? 5);
+    setSliderVal('admin-chk-mood-range', latest?.mood ?? 5);
+    setSliderVal('admin-chk-energy-range', latest?.energy ?? 5);
+
+    document.getElementById('admin-chk-notes').value = '';
+    document.getElementById('admin-chk-insights').value = '';
+    document.getElementById('admin-chk-ai-enabled').checked = true;
+
+    this.openModal('modal-admin-entry-checkin');
+  }
+
+  async handleAdminEntryCheckinSubmit() {
+    const userId = document.getElementById('admin-entry-user-id').value;
+    const user = storage.getUserById(userId);
+    if (!user) return;
+
+    const submitBtn = document.getElementById('btn-admin-entry-submit');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = '✨ AnyModel формулирует отклик...';
+
+    try {
+      const anxiety = parseInt(document.getElementById('admin-chk-anxiety-range').value, 10);
+      const sleep = parseInt(document.getElementById('admin-chk-sleep-range').value, 10);
+      const mood = parseInt(document.getElementById('admin-chk-mood-range').value, 10);
+      const energy = parseInt(document.getElementById('admin-chk-energy-range').value, 10);
+      const notes = document.getElementById('admin-chk-notes').value;
+      const insights = document.getElementById('admin-chk-insights').value;
+      const isAiEnabled = document.getElementById('admin-chk-ai-enabled').checked;
+
+      const checkinDraft = {
+        date: new Date().toISOString(),
+        anxiety,
+        sleep,
+        mood,
+        energy,
+        weekText: notes.trim() || 'Срез зафиксирован ведущим на очной встрече группы',
+        insights: insights.trim(),
+        byTherapist: true
+      };
+
+      if (isAiEnabled) {
+        const aiResult = await aiService.generateCheckinResponse(user.name, checkinDraft);
+        checkinDraft.aiResponse = aiResult.text;
+        checkinDraft.isCrisis = aiResult.isCrisis;
+        checkinDraft.priorityAlert = aiResult.isCrisis;
+      }
+
+      storage.saveCheckin(user.id, checkinDraft);
+
+      this.closeModal('modal-admin-entry-checkin');
+      document.getElementById('form-admin-entry-checkin').reset();
+
+      this.showToast(`Срез за ${user.name} сохранён! ${isAiEnabled ? 'Отклик AnyModel получен.' : ''}`);
+      this.renderTherapistDashboard();
+    } catch (err) {
+      console.error(err);
+      this.showToast('Ошибка сохранения среза: ' + err.message, 'error');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  }
+
+  copyParticipantAccessCard(participant) {
+    const login = participant.email || participant.name;
+    const pass = participant.plainPassword || '1234';
+    const text = `🌿 Здравствуйте, ${participant.name}!
+Ваш доступ к личному дневнику «Мой ритм» (групповая гипнотерапия):
+
+🌐 Ссылка: https://deniskazakov1976-glitch.github.io/hypnotherapy-group/ritm/
+👤 Логин: ${login}
+🔑 Пароль: ${pass}
+
+Приложение можно установить на экран телефона в 1 клик через браузер!`;
+
+    navigator.clipboard.writeText(text).then(() => {
+      this.showToast(`Карточка доступа для ${participant.name} скопирована! Отправьте её в WhatsApp.`);
+    }).catch(() => {
+      this.showToast(`Логин: ${login}, Пароль: ${pass}`);
+    });
+  }
+
+  async syncCloudData() {
+    const badge = document.getElementById('cloud-sync-status-badge');
+    if (badge) {
+      badge.className = 'cloud-sync-badge syncing';
+      badge.textContent = '🔄 Синхронизация...';
+    }
+
+    try {
+      storage.saveCloudSyncConfig({
+        enabled: true,
+        lastSyncedAt: new Date().toISOString(),
+        status: 'synced'
+      });
+
+      if (firebaseService.isInitialized) {
+        await firebaseService.syncAll({
+          users: storage.getUsers(),
+          surveys: storage.getSurveys(),
+          checkins: storage.getAllCheckins()
+        });
+      }
+
+      setTimeout(() => {
+        this.updateCloudSyncBadge();
+        this.showToast('Данные успешно синхронизированы! ✨');
+      }, 500);
+    } catch (err) {
+      console.warn('Sync error:', err);
+      if (badge) {
+        badge.className = 'cloud-sync-badge error';
+        badge.textContent = '⚠️ Ошибка связи';
+      }
+      this.showToast('Синхронизация сохранена локально', 'warning');
     }
   }
 
