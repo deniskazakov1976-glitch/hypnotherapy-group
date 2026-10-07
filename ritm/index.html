@@ -783,6 +783,25 @@
 
       <form id="form-admin-entry-checkin">
         <input type="hidden" id="admin-entry-user-id">
+        <input type="hidden" id="admin-entry-checkin-id">
+
+        <!-- Дата среза (поддержка ввода задним числом и выбора даты встречи) -->
+        <div class="form-group" style="margin-bottom: 14px; background: #F8FAF9; padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <label class="form-label" for="admin-chk-date" style="margin-bottom: 2px; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 6px;">
+                <span>📅</span> Дата среза (можно задним числом) *
+              </label>
+              <div class="form-hint" style="margin-top: 0;">Укажите дату очной сессии или встречи группы</div>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="date" id="admin-chk-date" class="form-input" style="padding: 7px 12px; font-weight: 600; font-size: 0.95rem; width: auto;" required>
+              <button type="button" class="btn btn-outline btn-sm" id="btn-admin-chk-today" style="padding: 7px 10px; font-size: 0.8rem; white-space: nowrap;" title="Установить сегодняшнюю дату">
+                Сегодня
+              </button>
+            </div>
+          </div>
+        </div>
 
         <!-- 4 Шкалы состояния -->
         <div class="scales-grid" style="margin: 6px 0 16px;">

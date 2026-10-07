@@ -329,14 +329,32 @@ export class StorageService {
     if (!all[userId]) {
       all[userId] = [];
     }
+    const checkinId = checkinData.id || 'chk_' + Date.now();
+    const existingIdx = all[userId].findIndex(c => c.id === checkinId);
     const newCheckin = {
-      id: checkinData.id || 'chk_' + Date.now(),
+      id: checkinId,
       date: checkinData.date || new Date().toISOString(),
       ...checkinData
     };
-    all[userId].push(newCheckin);
+
+    if (existingIdx >= 0) {
+      all[userId][existingIdx] = { ...all[userId][existingIdx], ...newCheckin };
+    } else {
+      all[userId].push(newCheckin);
+    }
+
     localStorage.setItem(STORAGE_KEYS.CHECKINS, JSON.stringify(all));
     return newCheckin;
+  }
+
+  deleteCheckin(userId, checkinId) {
+    const all = this.getAllCheckins();
+    if (all[userId]) {
+      all[userId] = all[userId].filter(c => c.id !== checkinId);
+      localStorage.setItem(STORAGE_KEYS.CHECKINS, JSON.stringify(all));
+      return true;
+    }
+    return false;
   }
 
   // Получить кризисные чек-ины (для подсветки у терапевта)

@@ -86,6 +86,7 @@ def test_storage_service(ctx):
     ctx.check("Метод getCurrentUser() и setCurrentUser()", "getCurrentUser()" in content and "setCurrentUser(" in content)
     ctx.check("Метод saveSurvey() и getSurveyByUserId()", "saveSurvey(" in content and "getSurveyByUserId(" in content)
     ctx.check("Метод saveCheckin() и getCheckinsByUserId()", "saveCheckin(" in content and "getCheckinsByUserId(" in content)
+    ctx.check("Метод deleteCheckin() для удаления срезов в storage.js", "deleteCheckin(" in content)
     ctx.check("Метод getCrisisAlerts() для ведущего", "getCrisisAlerts()" in content)
     ctx.check("Фолбэк настроек ИИ на APP_CONFIG.ai.apiKey", "APP_CONFIG.ai.apiKey" in content)
     ctx.check("Экспорт и импорт базы данных (exportAllData, importAllData)", "exportAllData()" in content and "importAllData(" in content)
@@ -187,6 +188,8 @@ def test_participant_management(ctx):
     ctx.check("Модальное окно регистрации участника modal-admin-add-participant", 'id="modal-admin-add-participant"' in index_html)
     ctx.check("Модальное окно редактирования участника modal-admin-edit-participant", 'id="modal-admin-edit-participant"' in index_html)
     ctx.check("Модальное окно очного среза на группе modal-admin-entry-checkin", 'id="modal-admin-entry-checkin"' in index_html)
+    ctx.check("Поле выбора даты среза admin-chk-date (задним числом)", 'id="admin-chk-date"' in index_html)
+    ctx.check("Кнопка быстрой установки сегодняшней даты btn-admin-chk-today", 'id="btn-admin-chk-today"' in index_html)
     ctx.check("Бейдж статуса синхронизации cloud-sync-status-badge", 'id="cloud-sync-status-badge"' in index_html)
 
     # Стилистика в styles.css
@@ -198,6 +201,7 @@ def test_participant_management(ctx):
     # Контроллер app.js
     ctx.check("Метод отрисовки таблицы renderAdminParticipantsTable() в app.js", "renderAdminParticipantsTable()" in app_js)
     ctx.check("Копирование карточки доступа для WhatsApp copyParticipantAccessCard()", "copyParticipantAccessCard(" in app_js)
+    ctx.check("Кнопки редактирования срезов в таймлайне (.btn-edit-timeline-checkin)", "btn-edit-timeline-checkin" in app_js)
     ctx.check("Метод фиксации очного среза с откликом ИИ handleAdminEntryCheckinSubmit()", "handleAdminEntryCheckinSubmit()" in app_js)
     ctx.check("Метод облачной синхронизации syncCloudData() в app.js", "syncCloudData()" in app_js)
 

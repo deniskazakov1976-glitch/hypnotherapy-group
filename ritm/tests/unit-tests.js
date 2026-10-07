@@ -273,6 +273,55 @@ export function registerAllTests(runner) {
       expect(list[1].id).toBe('c2');
     });
 
+    runner.it('Обновляет существующий срез задним числом in-place без создания дубликатов', () => {
+      testStorage.saveCheckin('user_retro', {
+        id: 'chk_edit_1',
+        date: '2026-09-15T10:00:00Z',
+        anxiety: 7,
+        sleep: 4,
+        weekText: 'Первоначальная запись'
+      });
+      let records = testStorage.getCheckinsByUserId('user_retro');
+      expect(records.length).toBe(1);
+      expect(records[0].anxiety).toBe(7);
+
+      // Редактируем задним числом с изменением даты и баллов
+      testStorage.saveCheckin('user_retro', {
+        id: 'chk_edit_1',
+        date: '2026-09-10T10:00:00Z',
+        anxiety: 3,
+        sleep: 8,
+        weekText: 'Исправленная запись за 10 сентября'
+      });
+      records = testStorage.getCheckinsByUserId('user_retro');
+      expect(records.length).toBe(1); // Не должно дублироваться
+      expect(records[0].anxiety).toBe(3);
+      expect(records[0].sleep).toBe(8);
+      expect(records[0].date).toBe('2026-09-10T10:00:00Z');
+      expect(records[0].weekText).toBe('Исправленная запись за 10 сентября');
+    });
+
+    runner.it('Удаляет срез через deleteCheckin(userId, checkinId)', () => {
+      testStorage.saveCheckin('user_del_test', {
+        id: 'del_1',
+        date: '2026-10-01T10:00:00Z',
+        anxiety: 5
+      });
+      testStorage.saveCheckin('user_del_test', {
+        id: 'del_2',
+        date: '2026-10-02T10:00:00Z',
+        anxiety: 6
+      });
+      expect(testStorage.getCheckinsByUserId('user_del_test').length).toBe(2);
+
+      const deleted = testStorage.deleteCheckin('user_del_test', 'del_1');
+      expect(deleted).toBe(true);
+
+      const remaining = testStorage.getCheckinsByUserId('user_del_test');
+      expect(remaining.length).toBe(1);
+      expect(remaining[0].id).toBe('del_2');
+    });
+
     runner.it('Выявляет кризисные алерты в getCrisisAlerts()', () => {
       testStorage.saveCheckin('user_crisis_test', {
         id: 'c_crit',

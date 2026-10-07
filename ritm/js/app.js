@@ -454,6 +454,21 @@ class App {
       });
     }
 
+    // Быстрая кнопка "Сегодня" для даты среза
+    const btnToday = document.getElementById('btn-admin-chk-today');
+    if (btnToday) {
+      btnToday.addEventListener('click', () => {
+        const dateInput = document.getElementById('admin-chk-date');
+        if (dateInput) {
+          const today = new Date();
+          const yyyy = today.getFullYear();
+          const mm = String(today.getMonth() + 1).padStart(2, '0');
+          const dd = String(today.getDate()).padStart(2, '0');
+          dateInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+      });
+    }
+
     // Кнопка облачной синхронизации
     const btnSyncCloud = document.getElementById('btn-admin-sync-cloud');
     if (btnSyncCloud) {
@@ -1011,8 +1026,37 @@ class App {
           ${c.weekText ? `<div class="timeline-text"><strong>Ответ:</strong> ${esc(c.weekText)}</div>` : ''}
           ${c.insights ? `<div class="timeline-insights"><strong>Инсайт:</strong> ${esc(c.insights)}</div>` : ''}
           ${c.aiResponse ? `<div style="font-size: 0.85rem; font-style: italic; color: var(--color-text-muted); margin-top: 6px;"><strong>Отклик ИИ:</strong> «${esc(c.aiResponse)}»</div>` : ''}
+          <div style="display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; align-items: center;">
+            <button type="button" class="btn btn-outline btn-sm btn-edit-timeline-checkin" data-checkin-id="${c.id}" data-user-id="${patient.id}" style="padding: 4px 10px; font-size: 0.78rem;" title="Изменить этот срез или дату задним числом">
+              ✏️ Изменить срез
+            </button>
+            <button type="button" class="admin-icon-btn btn-delete-timeline-checkin" data-checkin-id="${c.id}" data-user-id="${patient.id}" title="Удалить запись среза" style="color: #DC2626; padding: 4px 6px;">
+              🗑️
+            </button>
+          </div>
         `;
         timelineEl.appendChild(item);
+      });
+
+      // Слушатели кнопок редактирования и удаления срезов из хроники
+      timelineEl.querySelectorAll('.btn-edit-timeline-checkin').forEach(b => {
+        b.addEventListener('click', () => {
+          const cid = b.getAttribute('data-checkin-id');
+          const uid = b.getAttribute('data-user-id');
+          this.openExpressCheckinModal(uid, cid);
+        });
+      });
+
+      timelineEl.querySelectorAll('.btn-delete-timeline-checkin').forEach(b => {
+        b.addEventListener('click', () => {
+          const cid = b.getAttribute('data-checkin-id');
+          const uid = b.getAttribute('data-user-id');
+          if (confirm('Удалить эту запись среза?')) {
+            storage.deleteCheckin(uid, cid);
+            this.showToast('Запись среза удалена');
+            this.renderTherapistDashboard();
+          }
+        });
       });
     }
   }
@@ -1327,18 +1371,43 @@ class App {
     }
   }
 
-  openExpressCheckinModal(userId) {
+  openExpressCheckinModal(userId, checkinId = null) {
     const user = storage.getUserById(userId);
     if (!user) return;
 
     const checkins = storage.getCheckinsByUserId(userId);
     const survey = storage.getSurveyByUserId(userId);
-    const latest = checkins.length > 0 ? checkins[checkins.length - 1] : survey;
+
+    let targetCheckin = null;
+    if (checkinId) {
+      targetCheckin = checkins.find(c => c.id === checkinId);
+    }
+    const latest = targetCheckin || (checkins.length > 0 ? checkins[checkins.length - 1] : survey);
 
     document.getElementById('admin-entry-user-id').value = user.id;
-    document.getElementById('admin-entry-name').textContent = user.name;
+    document.getElementById('admin-entry-checkin-id').value = checkinId || '';
+    
+    // Заголовок модального окна
+    const nameEl = document.getElementById('admin-entry-name');
+    if (nameEl) {
+      nameEl.textContent = checkinId ? `${user.name} (редактирование)` : user.name;
+    }
 
-    // Задаем исходные значения шкал (из последнего среза или по умолчанию 5)
+    // Установка даты среза (поддержка ввода задним числом)
+    const dateInput = document.getElementById('admin-chk-date');
+    if (dateInput) {
+      if (targetCheckin && targetCheckin.date) {
+        dateInput.value = targetCheckin.date.slice(0, 10);
+      } else {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+      }
+    }
+
+    // Задаем исходные значения шкал
     const setSliderVal = (id, val) => {
       const slider = document.getElementById(id);
       if (slider) {
@@ -1352,22 +1421,29 @@ class App {
     setSliderVal('admin-chk-mood-range', latest?.mood ?? 5);
     setSliderVal('admin-chk-energy-range', latest?.energy ?? 5);
 
-    document.getElementById('admin-chk-notes').value = '';
-    document.getElementById('admin-chk-insights').value = '';
-    document.getElementById('admin-chk-ai-enabled').checked = true;
+    document.getElementById('admin-chk-notes').value = targetCheckin ? (targetCheckin.weekText || '') : '';
+    document.getElementById('admin-chk-insights').value = targetCheckin ? (targetCheckin.insights || '') : '';
+    document.getElementById('admin-chk-ai-enabled').checked = !targetCheckin;
 
     this.openModal('modal-admin-entry-checkin');
   }
 
   async handleAdminEntryCheckinSubmit() {
     const userId = document.getElementById('admin-entry-user-id').value;
+    const checkinId = document.getElementById('admin-entry-checkin-id').value;
     const user = storage.getUserById(userId);
     if (!user) return;
+
+    const dateVal = document.getElementById('admin-chk-date').value;
+    if (!dateVal) {
+      this.showToast('Пожалуйста, укажите дату среза', 'error');
+      return;
+    }
 
     const submitBtn = document.getElementById('btn-admin-entry-submit');
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = '✨ AnyModel формулирует отклик...';
+    submitBtn.textContent = '✨ Сохранение среза...';
 
     try {
       const anxiety = parseInt(document.getElementById('admin-chk-anxiety-range').value, 10);
@@ -1378,18 +1454,32 @@ class App {
       const insights = document.getElementById('admin-chk-insights').value;
       const isAiEnabled = document.getElementById('admin-chk-ai-enabled').checked;
 
+      // Формируем дату с сохранением времени дня (18:00 UTC)
+      const isoDate = new Date(`${dateVal}T18:00:00.000Z`).toISOString();
+
+      let existingCheckin = null;
+      if (checkinId) {
+        const checkins = storage.getCheckinsByUserId(userId);
+        existingCheckin = checkins.find(c => c.id === checkinId);
+      }
+
       const checkinDraft = {
-        date: new Date().toISOString(),
+        id: checkinId || ('chk_' + Date.now()),
+        date: isoDate,
         anxiety,
         sleep,
         mood,
         energy,
         weekText: notes.trim() || 'Срез зафиксирован ведущим на очной встрече группы',
         insights: insights.trim(),
-        byTherapist: true
+        byTherapist: true,
+        aiResponse: existingCheckin ? existingCheckin.aiResponse : null,
+        isCrisis: existingCheckin ? existingCheckin.isCrisis : false,
+        priorityAlert: existingCheckin ? existingCheckin.priorityAlert : false
       };
 
       if (isAiEnabled) {
+        submitBtn.textContent = '✨ AnyModel формулирует отклик...';
         const aiResult = await aiService.generateCheckinResponse(user.name, checkinDraft);
         checkinDraft.aiResponse = aiResult.text;
         checkinDraft.isCrisis = aiResult.isCrisis;
@@ -1401,7 +1491,8 @@ class App {
       this.closeModal('modal-admin-entry-checkin');
       document.getElementById('form-admin-entry-checkin').reset();
 
-      this.showToast(`Срез за ${user.name} сохранён! ${isAiEnabled ? 'Отклик AnyModel получен.' : ''}`);
+      const dateRu = new Date(isoDate).toLocaleDateString('ru-RU');
+      this.showToast(`Срез за ${user.name} на ${dateRu} сохранён! ${isAiEnabled ? 'Отклик AnyModel получен.' : ''}`);
       this.renderTherapistDashboard();
     } catch (err) {
       console.error(err);
