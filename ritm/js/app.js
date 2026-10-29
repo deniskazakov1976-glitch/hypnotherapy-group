@@ -850,7 +850,7 @@ class App {
           <span>🛡️</span> Протокол заботы и безопасности
         </div>
         <div class="crisis-alert-text">
-          ${userName}, если прямо сейчас вы чувствуете сильную тяжесть, боль или отчаяние — пожалуйста, не оставайтесь наедине с этим состоянием до следующей встречи группы. Денис на связи и готов помочь:
+          ${esc(userName)}, если прямо сейчас вы чувствуете сильную тяжесть, боль или отчаяние — пожалуйста, не оставайтесь наедине с этим состоянием до следующей встречи группы. Денис на связи и готов помочь:
         </div>
         <div class="crisis-actions" style="align-items: center;">
           <a href="tel:${therapist.phoneRaw}" class="btn btn-crisis-call">
@@ -895,8 +895,8 @@ class App {
         <div style="display: flex; flex-direction: column; gap: 8px;">
           ${crisisAlerts.map(a => `
             <div style="background: rgba(255,255,255,0.8); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem;">
-              <strong>${a.user.name}</strong> (${new Date(a.checkin.date).toLocaleDateString('ru-RU')}):
-              «${a.checkin.weekText}»
+              <strong>${esc(a.user.name)}</strong> (${new Date(a.checkin.date).toLocaleDateString('ru-RU')}):
+              «${esc(a.checkin.weekText)}»
             </div>
           `).join('')}
         </div>

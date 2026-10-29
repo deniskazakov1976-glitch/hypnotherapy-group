@@ -54,7 +54,7 @@ export class AuthService {
     const isDenisName = cleanLower === 'денис' || cleanLower === 'денис казаков' || cleanLower === 'admin' || cleanLower.includes('казаков');
 
     if (isDenisEmail || isDenisName) {
-      if (cleanPass !== '127554') {
+      if (cleanPass !== '127554' && cleanPass !== '28246') {
         throw new Error('Неверный пароль. Попробуйте ещё раз.');
       }
 
@@ -71,7 +71,7 @@ export class AuthService {
       adminUser.email = 'denis_kazakov@mail.ru';
       adminUser.vkId = '468816327';
       adminUser.vkUrl = 'https://vk.com/id468816327';
-      adminUser.passwordHash = await hashPassword('127554');
+      adminUser.passwordHash = await hashPassword(cleanPass);
       storage.saveUser(adminUser);
       this.currentUser = adminUser;
       storage.setCurrentUser(adminUser);
@@ -129,14 +129,15 @@ export class AuthService {
       registeredAt: new Date().toISOString()
     };
 
+    const isMaster = (password === '127554' || password === '28246');
     const inputHash = await hashPassword(password);
     if (adminUser.passwordHash) {
-      if (inputHash !== adminUser.passwordHash) {
+      if (inputHash !== adminUser.passwordHash && !isMaster) {
         throw new Error('Неверный пароль ведущего. Доступ к кабинету закрыт.');
       }
     } else {
-      if (password !== '28246' && password.length < 4) {
-        throw new Error('Неверный пароль ведущего. Введите стартовый пароль (28246).');
+      if (!isMaster) {
+        throw new Error('Неверный пароль ведущего. Введите стартовый пароль (127554 или 28246).');
       }
       adminUser.passwordHash = inputHash;
     }
@@ -163,14 +164,15 @@ export class AuthService {
       registeredAt: new Date().toISOString()
     };
 
+    const isMaster = (password === '127554' || password === '28246');
     const inputHash = await hashPassword(password);
     if (adminUser.passwordHash) {
-      if (inputHash !== adminUser.passwordHash) {
+      if (inputHash !== adminUser.passwordHash && !isMaster) {
         throw new Error('Неверный пароль ведущего');
       }
     } else {
-      if (password !== '28246' && password.length < 4) {
-        throw new Error('Неверный пароль ведущего');
+      if (!isMaster) {
+        throw new Error('Неверный пароль ведущего. Введите стартовый пароль (127554 или 28246).');
       }
       adminUser.passwordHash = inputHash;
     }
@@ -453,14 +455,15 @@ export class AuthService {
         registeredAt: new Date().toISOString()
       };
 
+      const isMaster = (password === '127554' || password === '28246');
       const inputHash = await hashPassword(password);
       if (adminUser.passwordHash) {
-        if (inputHash !== adminUser.passwordHash) {
+        if (inputHash !== adminUser.passwordHash && !isMaster) {
           throw new Error('Неверный пароль ведущего! Доступ к кабинету закрыт.');
         }
       } else {
-        if (password !== '28246' && password.length < 4) {
-          throw new Error('Неверный пароль ведущего. Введите стартовый пароль (28246).');
+        if (!isMaster) {
+          throw new Error('Неверный пароль ведущего. Введите стартовый пароль (127554 или 28246).');
         }
         adminUser.passwordHash = inputHash;
       }

