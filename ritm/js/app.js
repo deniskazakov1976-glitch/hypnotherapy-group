@@ -18,6 +18,29 @@ function esc(str) {
   return div.innerHTML;
 }
 
+/** Векторная SVG-иконографика (Дизайн-система 2.3) */
+const ICONS = {
+  wave: `<svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c3-4 6-4 8 0s6 4 8 0 4-4 4-4"/><path d="M2 17c3-4 6-4 8 0s6 4 8 0 4-4 4-4"/></svg>`,
+  moon: `<svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`,
+  leaf: `<svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>`,
+  zap: `<svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+  sparkles: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>`,
+  edit: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>`,
+  trash: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>`,
+  copy: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>`,
+  eye: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  eyeOff: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`,
+  user: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  users: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  sync: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>`,
+  alert: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>`,
+  shield: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  calendar: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="m9 16 2 2 4-4"/></svg>`,
+  phone: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+  message: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+  save: `<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`
+};
+
 class App {
   constructor() {
     this.selectedTherapistPatientId = null;
@@ -706,7 +729,7 @@ class App {
         aiBox.innerHTML = `
           <div class="ai-response-card">
             <div class="ai-response-header">
-              <span class="ai-badge">✨ Поддерживающий отклик ассистента</span>
+              <span class="ai-badge">${ICONS.sparkles} Поддерживающий отклик ассистента</span>
               <span style="font-size: 0.8rem; color: var(--color-text-muted);">
                 ${new Date(lastCheckin.date).toLocaleDateString('ru-RU')}
               </span>
@@ -758,7 +781,7 @@ class App {
         toggleWrapper.className = 'timeline-toggle-box';
         toggleWrapper.innerHTML = `
           <button type="button" class="btn btn-outline btn-sm" id="btn-toggle-older-weeks">
-            📅 Показать предыдущие недели (${older.length}) ▾
+            ${ICONS.calendar} Показать предыдущие недели (${older.length}) ▾
           </button>
           <div id="older-weeks-container" style="display: none; flex-direction: column; gap: 14px; margin-top: 14px;">
             ${older.map((c, i) => renderItemHtml(c, checkins.length - 1 - i)).join('')}
@@ -771,9 +794,9 @@ class App {
         btnToggle.addEventListener('click', () => {
           const isHidden = container.style.display === 'none';
           container.style.display = isHidden ? 'flex' : 'none';
-          btnToggle.textContent = isHidden 
+          btnToggle.innerHTML = isHidden 
             ? `▲ Свернуть предыдущие недели (${older.length})`
-            : `📅 Показать предыдущие недели (${older.length}) ▾`;
+            : `${ICONS.calendar} Показать предыдущие недели (${older.length}) ▾`;
         });
       }
     }
@@ -789,7 +812,7 @@ class App {
     const submitBtn = document.getElementById('btn-submit-checkin');
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = '✨ Ассистент бережно анализирует ответ...';
+    submitBtn.innerHTML = `${ICONS.sparkles} Ассистент бережно анализирует ответ...`;
 
     try {
       const weekText = document.getElementById('chk-week-text').value;
@@ -847,23 +870,23 @@ class App {
     return `
       <div class="crisis-alert-box">
         <div class="crisis-alert-header">
-          <span>🛡️</span> Протокол заботы и безопасности
+          <span>${ICONS.shield}</span> Протокол заботы и безопасности
         </div>
         <div class="crisis-alert-text">
           ${esc(userName)}, если прямо сейчас вы чувствуете сильную тяжесть, боль или отчаяние — пожалуйста, не оставайтесь наедине с этим состоянием до следующей встречи группы. Денис на связи и готов помочь:
         </div>
         <div class="crisis-actions" style="align-items: center;">
           <a href="tel:${therapist.phoneRaw}" class="btn btn-crisis-call">
-            📞 Позвонить Денису: ${therapist.phone}
+            ${ICONS.phone} Позвонить Денису: ${therapist.phone}
           </a>
           <a href="${therapist.whatsappUrl}" target="_blank" rel="noopener" class="btn btn-outline" style="background: #25D366; color: #FFFFFF; border-color: #25D366;">
-            💬 Написать в WhatsApp
+            ${ICONS.message} Написать в WhatsApp
           </a>
           <a href="tel:88002000122" class="btn btn-outline">
-            ☎️ Линия доверия 24/7: ${emergency.phone}
+            ${ICONS.phone} Линия доверия 24/7: ${emergency.phone}
           </a>
-          <button type="button" class="btn btn-outline btn-sm" onclick="this.closest('.crisis-alert-box').style.display='none'" style="margin-left: auto; color: var(--color-text-muted);">
-            ✕ Скрыть оповещение
+          <button type="button" class="btn btn-outline btn-sm" onclick="this.closest('.crisis-alert-box').style.display='none'" style="margin-left: auto; color: var(--color-text-muted);" aria-label="Закрыть">
+            &times; Скрыть оповещение
           </button>
         </div>
       </div>
@@ -887,7 +910,7 @@ class App {
       alertBanner.style.marginBottom = '20px';
       alertBanner.innerHTML = `
         <div class="crisis-alert-header">
-          <span>⚠️</span> Приоритетные сигналы безопасности (${crisisAlerts.length})
+          <span>${ICONS.alert}</span> Приоритетные сигналы безопасности (${crisisAlerts.length})
         </div>
         <div style="font-size: 0.95rem; margin-bottom: 10px;">
           Участники с маркерами высокого напряжения / кризисными формулировками в недавних чек-инах:
@@ -920,9 +943,9 @@ class App {
 
         let statusBadge = '';
         if (hasCrisis) {
-          statusBadge = '<span style="color:#DC2626;font-size:0.75rem;font-weight:700;">⚠️ Внимание</span>';
+          statusBadge = `<span style="color:var(--scale-anxiety);font-size:0.75rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;">${ICONS.alert} Внимание</span>`;
         } else if (checkins.length > 0) {
-          statusBadge = '<span style="color:#16A34A;font-size:0.75rem;font-weight:600;">В процессе ✨</span>';
+          statusBadge = `<span style="color:var(--scale-mood);font-size:0.75rem;font-weight:600;display:inline-flex;align-items:center;gap:4px;">В процессе ${ICONS.sparkles}</span>`;
         } else {
           statusBadge = '<span style="color:#94A3B8;font-size:0.75rem;">Новый</span>';
         }
@@ -935,7 +958,7 @@ class App {
 
         card.innerHTML = `
           <div class="group-card-header">
-            <span class="group-card-name">👤 ${esc(u.name)}</span>
+            <span class="group-card-name" style="display:inline-flex;align-items:center;gap:6px;">${ICONS.user} ${esc(u.name)}</span>
             ${statusBadge}
           </div>
           <div class="group-card-metrics">
@@ -990,16 +1013,16 @@ class App {
         const lastDate = new Date(checkins[checkins.length - 1].date);
         const daysAgo = Math.floor((Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
         if (daysAgo >= 14) {
-          recencyBadge = `<span style="color:#DC2626;font-size:0.7rem;font-weight:700;" title="Пропуск более 2 недель">⚠️ ${daysAgo}д</span>`;
+          recencyBadge = `<span style="color:var(--scale-anxiety);font-size:0.7rem;font-weight:700;display:inline-flex;align-items:center;gap:3px;" title="Пропуск более 2 недель">${ICONS.alert} ${daysAgo}д</span>`;
         } else if (daysAgo >= 7) {
-          recencyBadge = `<span style="color:#D97706;font-size:0.7rem;" title="Пора сдать чек-ин">${daysAgo}д</span>`;
+          recencyBadge = `<span style="color:var(--scale-energy);font-size:0.7rem;" title="Пора сдать чек-ин">${daysAgo}д</span>`;
         }
       } else {
         recencyBadge = `<span style="color:#94A3B8;font-size:0.7rem;">(нет записей)</span>`;
       }
 
       btn.innerHTML = `
-        <span>👤 ${esc(u.name)}</span>
+        <span style="display:inline-flex;align-items:center;gap:6px;">${ICONS.user} ${esc(u.name)}</span>
         ${hasCrisis ? '<span class="alert-dot" title="Есть приоритетный маркер"></span>' : ''}
         <span style="font-size: 0.76rem; opacity: 0.8;">(${checkins.length} чек-ин.)</span>
         ${recencyBadge}
@@ -1060,7 +1083,7 @@ class App {
         item.innerHTML = `
           <div class="timeline-header">
             <span class="timeline-date">
-              ${c.isCrisis ? '⚠️ [ВНИМАНИЕ] ' : ''}Неделя #${checkins.length - idx} • ${new Date(c.date).toLocaleDateString('ru-RU')}
+              ${c.isCrisis ? `<span style="color:var(--scale-anxiety);display:inline-flex;align-items:center;gap:4px;">${ICONS.alert} [ВНИМАНИЕ]</span> ` : ''}Неделя #${checkins.length - idx} • ${new Date(c.date).toLocaleDateString('ru-RU')}
             </span>
             <div class="timeline-scores">
               <span class="score-badge anxiety">Тревожность: ${c.anxiety}</span>
@@ -1074,10 +1097,10 @@ class App {
           ${c.aiResponse ? `<div style="font-size: 0.85rem; font-style: italic; color: var(--color-text-muted); margin-top: 6px;"><strong>Отклик ИИ:</strong> «${esc(c.aiResponse)}»</div>` : ''}
           <div style="display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; align-items: center;">
             <button type="button" class="btn btn-outline btn-sm btn-edit-timeline-checkin" data-checkin-id="${c.id}" data-user-id="${patient.id}" style="padding: 4px 10px; font-size: 0.78rem;" title="Изменить этот срез или дату задним числом">
-              ✏️ Изменить срез
+              ${ICONS.edit} Изменить срез
             </button>
-            <button type="button" class="admin-icon-btn btn-delete-timeline-checkin" data-checkin-id="${c.id}" data-user-id="${patient.id}" title="Удалить запись среза" style="color: #DC2626; padding: 4px 6px;">
-              🗑️
+            <button type="button" class="admin-icon-btn btn-delete-timeline-checkin" data-checkin-id="${c.id}" data-user-id="${patient.id}" title="Удалить запись среза" style="color: #DC2626;">
+              ${ICONS.trash}
             </button>
           </div>
         `;
@@ -1118,7 +1141,7 @@ class App {
     const btn = document.getElementById('btn-generate-ai-summary');
     const originalText = btn.textContent;
     btn.disabled = true;
-    btn.textContent = '✨ Формирование аналитической сводки...';
+    btn.innerHTML = `${ICONS.sparkles} Формирование аналитической сводки...`;
 
     try {
       const summaryText = await aiService.generateTherapistSummary(patient, survey, checkins);
@@ -1145,14 +1168,14 @@ class App {
     const cfg = storage.getCloudSyncConfig();
     if (cfg.status === 'syncing') {
       badge.className = 'cloud-sync-badge syncing';
-      badge.textContent = '🔄 Синхронизация...';
+      badge.innerHTML = `${ICONS.sync} Синхронизация...`;
     } else if (cfg.status === 'synced') {
       badge.className = 'cloud-sync-badge synced';
       const timeStr = cfg.lastSyncedAt ? new Date(cfg.lastSyncedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : 'сейчас';
-      badge.textContent = `🟢 Данные синхронизированы (${timeStr})`;
+      badge.innerHTML = `<span class="cloud-sync-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#1E6B4A;margin-right:4px;"></span> Данные синхронизированы (${timeStr})`;
     } else {
       badge.className = 'cloud-sync-badge';
-      badge.textContent = '💾 Локальное хранилище';
+      badge.innerHTML = `${ICONS.save} Локальное хранилище`;
     }
   }
 
@@ -1165,9 +1188,9 @@ class App {
     if (users.length === 0) {
       container.innerHTML = `
         <div style="text-align: center; padding: 32px 16px; color: var(--color-text-muted);">
-          <div style="font-size: 2rem; margin-bottom: 8px;">👥</div>
+          <div style="font-size: 2rem; margin-bottom: 8px; color: var(--color-primary);">${ICONS.users}</div>
           <div style="font-weight: 600; font-size: 1.05rem; margin-bottom: 4px;">В группе пока нет участников</div>
-          <p style="font-size: 0.9rem; margin-bottom: 16px;">Зарегистрируйте первого участника с помощью кнопки «➕ Зарегистрировать участника» выше.</p>
+          <p style="font-size: 0.9rem; margin-bottom: 16px;">Зарегистрируйте первого участника с помощью кнопки «Зарегистрировать участника» выше.</p>
         </div>
       `;
       return;
@@ -1244,11 +1267,11 @@ class App {
                 ${passText}
               </span>
               <button type="button" class="admin-icon-btn btn-toggle-pass" data-user-id="${u.id}" title="${isRevealed ? 'Скрыть пароль' : 'Показать пароль'}">
-                ${isRevealed ? '👁️‍🗨️' : '👁️'}
+                ${isRevealed ? ICONS.eyeOff : ICONS.eye}
               </button>
               ${u.plainPassword ? `
                 <button type="button" class="admin-icon-btn btn-copy-pass" data-pass="${esc(u.plainPassword)}" title="Скопировать пароль">
-                  📋
+                  ${ICONS.copy}
                 </button>
               ` : ''}
             </div>
@@ -1265,16 +1288,16 @@ class App {
           <td data-label="Действия">
             <div class="admin-actions-cell" style="justify-content: flex-end;">
               <button type="button" class="btn btn-accent btn-sm btn-action-checkin" data-user-id="${u.id}" data-user-name="${esc(u.name)}" title="Зафиксировать срез состояния на шеринге">
-                ✍️ Внести срез
+                ${ICONS.edit} Внести срез
               </button>
               <button type="button" class="btn btn-outline btn-sm btn-action-card" data-user-id="${u.id}" title="Скопировать доступ для WhatsApp">
-                📋 Доступ
+                ${ICONS.copy} Доступ
               </button>
               <button type="button" class="admin-icon-btn btn-action-edit" data-user-id="${u.id}" title="Редактировать">
-                ✏️
+                ${ICONS.edit}
               </button>
               <button type="button" class="admin-icon-btn btn-action-delete" data-user-id="${u.id}" data-user-name="${esc(u.name)}" title="Удалить участника" style="color: #DC2626;">
-                🗑️
+                ${ICONS.trash}
               </button>
             </div>
           </td>
@@ -1489,7 +1512,7 @@ class App {
     const submitBtn = document.getElementById('btn-admin-entry-submit');
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = '✨ Сохранение среза...';
+    submitBtn.innerHTML = `${ICONS.sparkles} Сохранение среза...`;
 
     try {
       const anxiety = parseInt(document.getElementById('admin-chk-anxiety-range').value, 10);
@@ -1525,7 +1548,7 @@ class App {
       };
 
       if (isAiEnabled) {
-        submitBtn.textContent = '✨ AnyModel формулирует отклик...';
+        submitBtn.innerHTML = `${ICONS.sparkles} AnyModel формулирует отклик...`;
         const aiResult = await aiService.generateCheckinResponse(user.name, checkinDraft);
         checkinDraft.aiResponse = aiResult.text;
         checkinDraft.isCrisis = aiResult.isCrisis;
@@ -1572,7 +1595,7 @@ class App {
     const badge = document.getElementById('cloud-sync-status-badge');
     if (badge) {
       badge.className = 'cloud-sync-badge syncing';
-      badge.textContent = '🔄 Синхронизация...';
+      badge.innerHTML = `${ICONS.sync} Синхронизация...`;
     }
 
     try {
@@ -1592,13 +1615,13 @@ class App {
 
       setTimeout(() => {
         this.updateCloudSyncBadge();
-        this.showToast('Данные успешно синхронизированы! ✨');
+        this.showToast('Данные успешно синхронизированы!');
       }, 500);
     } catch (err) {
       console.warn('Sync error:', err);
       if (badge) {
         badge.className = 'cloud-sync-badge error';
-        badge.textContent = '⚠️ Ошибка связи';
+        badge.innerHTML = `${ICONS.alert} Ошибка связи`;
       }
       this.showToast('Синхронизация сохранена локально', 'warning');
     }
@@ -1669,16 +1692,16 @@ class App {
     const toast = document.createElement('div');
     toast.className = 'toast';
 
-    let icon = '🌿';
+    let icon = ICONS.leaf;
     if (type === 'error') {
-      icon = '⚠️';
+      icon = ICONS.alert;
       toast.style.background = '#DC2626';
     } else if (type === 'warning') {
-      icon = '🛡️';
+      icon = ICONS.shield;
       toast.style.background = '#B45309';
     }
 
-    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+    toast.innerHTML = `<span style="display:inline-flex;align-items:center;">${icon}</span> <span>${message}</span>`;
     container.appendChild(toast);
 
     setTimeout(() => {
@@ -1780,7 +1803,7 @@ class App {
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === 'accepted') {
-          this.showToast('«Мой ритм» устанавливается на ваш телефон! 🎉');
+          this.showToast('«Мой ритм» успешно устанавливается на ваш телефон!');
           this.closeModal(modalInstallId);
           if (banner) banner.style.display = 'none';
         }
@@ -1823,7 +1846,7 @@ class App {
     if (isIos && !isStandalone && !localStorage.getItem('moy_ritm_pwa_dismissed')) {
       if (banner) banner.style.display = 'block';
       if (descText) {
-        descText.textContent = 'Установите иконку: нажмите «Поделиться» ⎋ → «На экран "Домой"»';
+        descText.textContent = 'Установите иконку: нажмите «Поделиться» → «На экран "Домой"»';
       }
       if (btnInstall) {
         btnInstall.textContent = 'Инструкция';

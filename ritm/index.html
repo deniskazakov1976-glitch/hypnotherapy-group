@@ -18,9 +18,14 @@
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+
+  <!-- Google Fonts: Plus Jakarta Sans (Zero Layout Shift via preconnect & swap) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Стили -->
-  <link rel="stylesheet" href="styles.css?v=2.1.0">
+  <link rel="stylesheet" href="styles.css?v=2.3.0">
 
   <!-- Chart.js для интерактивных графиков динамики -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -48,10 +53,10 @@
           <span id="user-display-role" class="role-tag patient">Участник</span>
         </div>
         <button id="btn-header-install" class="btn btn-outline btn-sm" style="display: none; border-color: var(--color-primary); color: var(--color-primary); font-weight: 600;" title="Установить приложение на телефон">
-          📱 Приложение
+          <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><line x1="12" x2="12.01" y1="18" y2="18"/></svg> Приложение
         </button>
         <button id="btn-admin-settings" class="btn btn-outline btn-sm" style="display: none;" title="Настройки API и Firebase">
-          ⚙️ Настройки
+          <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Настройки
         </button>
         <button id="btn-logout" class="btn btn-outline btn-sm" style="display: none;">
           Выйти
@@ -74,8 +79,8 @@
           </div>
         </div>
         <div style="display: flex; gap: 6px; flex-shrink: 0;">
-          <button type="button" id="btn-pwa-install" class="btn btn-primary btn-sm" style="padding: 6px 10px; font-size: 0.82rem;">📱 Установить</button>
-          <button type="button" id="btn-pwa-dismiss" class="btn btn-outline btn-sm" style="color: var(--color-text-muted); padding: 6px 9px;">✕</button>
+          <button type="button" id="btn-pwa-install" class="btn btn-primary btn-sm" style="padding: 6px 10px; font-size: 0.82rem;"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><line x1="12" x2="12.01" y1="18" y2="18"/></svg> Установить</button>
+          <button type="button" id="btn-pwa-dismiss" class="btn btn-outline btn-sm" style="color: var(--color-text-muted); padding: 6px 9px;" aria-label="Закрыть">&times;</button>
         </div>
       </div>
     </div>
@@ -164,7 +169,7 @@
           <!-- Кнопка вызова установки на телефон -->
           <div style="margin-top: 16px; text-align: center;">
             <button type="button" id="btn-open-install-modal" class="btn btn-outline btn-full btn-sm" style="border-style: dashed; padding: 10px 14px; font-size: 0.88rem; color: var(--color-primary); display: flex; align-items: center; justify-content: center; gap: 8px;">
-              <span>📲</span>
+              <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><line x1="12" x2="12.01" y1="18" y2="18"/></svg>
               <span>Установить «Мой ритм» на телефон (Android / iPhone)</span>
             </button>
           </div>
@@ -205,7 +210,7 @@
             <!-- Тревожность -->
             <div class="scale-card">
               <div class="scale-card-header">
-                <span class="scale-name">🌊 Тревожность</span>
+                <span class="scale-name"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c3-4 6-4 8 0s6 4 8 0 4-4 4-4"/><path d="M2 17c3-4 6-4 8 0s6 4 8 0 4-4 4-4"/></svg> Тревожность</span>
                 <span class="scale-value-badge" id="init-anxiety-badge">5</span>
               </div>
               <input type="range" min="1" max="10" value="5" class="scale-slider" id="init-anxiety-range">
@@ -219,7 +224,7 @@
             <!-- Сон -->
             <div class="scale-card">
               <div class="scale-card-header">
-                <span class="scale-name">🌙 Качество сна</span>
+                <span class="scale-name"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg> Качество сна</span>
                 <span class="scale-value-badge" id="init-sleep-badge">5</span>
               </div>
               <input type="range" min="1" max="10" value="5" class="scale-slider" id="init-sleep-range">
@@ -233,7 +238,7 @@
             <!-- Настроение -->
             <div class="scale-card">
               <div class="scale-card-header">
-                <span class="scale-name">🌿 Настроение</span>
+                <span class="scale-name"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg> Настроение</span>
                 <span class="scale-value-badge" id="init-mood-badge">5</span>
               </div>
               <input type="range" min="1" max="10" value="5" class="scale-slider" id="init-mood-range">
@@ -247,7 +252,7 @@
             <!-- Энергия -->
             <div class="scale-card">
               <div class="scale-card-header">
-                <span class="scale-name">⚡ Уровень энергии</span>
+                <span class="scale-name"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Уровень энергии</span>
                 <span class="scale-value-badge" id="init-energy-badge">5</span>
               </div>
               <input type="range" min="1" max="10" value="5" class="scale-slider" id="init-energy-range">
@@ -295,7 +300,7 @@
       <!-- Быстрое действие (sticky на мобильном) -->
       <div style="margin-bottom: 16px;">
         <button id="btn-open-checkin" class="btn btn-accent btn-full" style="padding: 14px 20px; font-size: 1.02rem; box-shadow: 0 4px 12px rgba(0,0,0,0.12);">
-          ✍️ Заполнить чек-ин за неделю
+          <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Заполнить чек-ин за неделю
         </button>
       </div>
 
@@ -312,25 +317,25 @@
       <!-- Сводные индикаторы текущего состояния -->
       <div class="metrics-snapshot">
         <div class="metric-pill anxiety">
-          <span class="metric-header">🌊 Тревожность</span>
+          <span class="metric-header"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c3-4 6-4 8 0s6 4 8 0 4-4 4-4"/><path d="M2 17c3-4 6-4 8 0s6 4 8 0 4-4 4-4"/></svg> Тревожность</span>
           <div class="metric-number"><span id="pill-anxiety">--</span><span>/10</span></div>
           <div class="metric-trend" id="trend-anxiety">Загрузка данных...</div>
         </div>
 
         <div class="metric-pill sleep">
-          <span class="metric-header">🌙 Качество сна</span>
+          <span class="metric-header"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg> Качество сна</span>
           <div class="metric-number"><span id="pill-sleep">--</span><span>/10</span></div>
           <div class="metric-trend" id="trend-sleep">Загрузка данных...</div>
         </div>
 
         <div class="metric-pill mood">
-          <span class="metric-header">🌿 Настроение</span>
+          <span class="metric-header"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg> Настроение</span>
           <div class="metric-number"><span id="pill-mood">--</span><span>/10</span></div>
           <div class="metric-trend" id="trend-mood">Загрузка данных...</div>
         </div>
 
         <div class="metric-pill energy">
-          <span class="metric-header">⚡ Энергия</span>
+          <span class="metric-header"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Энергия</span>
           <div class="metric-number"><span id="pill-energy">--</span><span>/10</span></div>
           <div class="metric-trend" id="trend-energy">Загрузка данных...</div>
         </div>
@@ -393,7 +398,7 @@
         </div>
         <div style="display: flex; gap: 10px;">
           <button id="btn-refresh-admin" class="btn btn-outline btn-sm">
-            🔄 Обновить
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg> Обновить
           </button>
         </div>
       </div>
@@ -403,8 +408,8 @@
 
       <!-- Сводка всей группы (Group Pulse Overview на одном экране) -->
       <div style="margin-bottom: 20px;">
-        <h2 style="font-size: 1.05rem; font-weight: 700; color: var(--color-primary); margin-bottom: 10px;">
-          👥 Состояние группы в целом (3–5 участников)
+        <h2 style="font-size: 1.05rem; font-weight: 700; color: var(--color-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+          <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Состояние группы в целом (3–5 участников)
         </h2>
         <div id="therapist-group-overview" class="group-overview-grid">
           <!-- Заполняется динамически карточками участников -->
@@ -419,7 +424,7 @@
         <div class="card-header" style="flex-wrap: wrap; gap: 12px; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 14px; margin-bottom: 16px;">
           <div>
             <h2 class="card-title" style="font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
-              <span>👥</span> Администрирование участников группы
+              <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Администрирование участников группы
             </h2>
             <p class="card-subtitle">
               Управление доступом, просмотр логинов/паролей, опрос на встрече и синхронизация
@@ -427,13 +432,13 @@
           </div>
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-left: auto;">
             <span id="cloud-sync-status-badge" class="cloud-sync-badge synced" title="Статус синхронизации">
-              🟢 Данные сохранены
+              <span class="cloud-sync-dot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #1E6B4A; margin-right: 4px;"></span> Данные сохранены
             </span>
             <button type="button" id="btn-admin-sync-cloud" class="btn btn-outline btn-sm">
-              🔄 Синхронизировать
+              <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg> Синхронизировать
             </button>
             <button type="button" id="btn-admin-add-participant" class="btn btn-accent btn-sm">
-              ➕ Зарегистрировать участника
+              <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg> Зарегистрировать участника
             </button>
           </div>
         </div>
@@ -446,8 +451,8 @@
 
       <!-- Вкладки участников группы для детального досье -->
       <div style="margin-bottom: 8px;">
-        <h3 style="font-size: 1rem; font-weight: 700; color: var(--color-primary); margin-bottom: 10px;">
-          📋 Подробное досье и динамика участника
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--color-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+          <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Подробное досье и динамика участника
         </h3>
       </div>
       <div class="therapist-nav" id="therapist-tabs">
@@ -487,7 +492,7 @@
           <!-- Кнопка генерации ИИ-сводки к сессии -->
           <div>
             <button id="btn-generate-ai-summary" class="btn btn-accent btn-full">
-              ✨ ИИ-сводка перед сессией
+              <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg> ИИ-сводка перед сессией
             </button>
             <div class="form-hint" style="text-align: center; margin-top: 6px;">
               Аналитическая выжимка для очной встречи
@@ -498,7 +503,7 @@
           <div id="therapist-ai-summary-box" style="display: none;">
             <div class="ai-summary-result" id="therapist-ai-summary-text"></div>
             <button id="btn-copy-summary" class="btn btn-outline btn-sm btn-full" style="margin-top: 8px;">
-              📋 Скопировать текст сводки
+              <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Скопировать текст сводки
             </button>
           </div>
         </div>
@@ -513,7 +518,7 @@
                 <p class="card-subtitle">Тревожность, сон, настроение, энергия от старта до текущей недели</p>
               </div>
               <button id="btn-generate-ai-summary-top" class="btn btn-accent btn-sm" style="margin-left: auto;">
-                ✨ ИИ-сводка к сессии
+                <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg> ИИ-сводка к сессии
               </button>
             </div>
             <div class="chart-container">
@@ -567,7 +572,7 @@
             <!-- Тревожность -->
             <div class="scale-card">
               <div class="scale-card-header">
-                <span class="scale-name">🌊 Тревожность (↓ лучше)</span>
+                <span class="scale-name"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c3-4 6-4 8 0s6 4 8 0 4-4 4-4"/><path d="M2 17c3-4 6-4 8 0s6 4 8 0 4-4 4-4"/></svg> Тревожность (↓ лучше)</span>
                 <span class="scale-value-badge" id="chk-anxiety-badge">5</span>
               </div>
               <input type="range" min="1" max="10" value="5" class="scale-slider" id="chk-anxiety-range">
@@ -581,7 +586,7 @@
             <!-- Сон -->
             <div class="scale-card">
               <div class="scale-card-header">
-                <span class="scale-name">🌙 Сон (↑ лучше)</span>
+                <span class="scale-name"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg> Сон (↑ лучше)</span>
                 <span class="scale-value-badge" id="chk-sleep-badge">5</span>
               </div>
               <input type="range" min="1" max="10" value="5" class="scale-slider" id="chk-sleep-range">
@@ -595,7 +600,7 @@
             <!-- Настроение -->
             <div class="scale-card">
               <div class="scale-card-header">
-                <span class="scale-name">🌿 Настроение (↑ лучше)</span>
+                <span class="scale-name"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg> Настроение (↑ лучше)</span>
                 <span class="scale-value-badge" id="chk-mood-badge">5</span>
               </div>
               <input type="range" min="1" max="10" value="5" class="scale-slider" id="chk-mood-range">
@@ -609,7 +614,7 @@
             <!-- Энергия -->
             <div class="scale-card">
               <div class="scale-card-header">
-                <span class="scale-name">⚡ Энергия (↑ лучше)</span>
+                <span class="scale-name"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Энергия (↑ лучше)</span>
                 <span class="scale-value-badge" id="chk-energy-badge">5</span>
               </div>
               <input type="range" min="1" max="10" value="5" class="scale-slider" id="chk-energy-range">
@@ -650,7 +655,7 @@
               ← К шкалам
             </button>
             <button type="submit" class="btn btn-primary btn-full" id="btn-submit-checkin">
-              Сохранить чек-ин и получить отклик ✨
+              Сохранить чек-ин и получить отклик <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
             </button>
           </div>
         </div>
@@ -667,7 +672,7 @@
       
       <div class="card-header" style="margin-bottom: 16px;">
         <div>
-          <h2 class="card-title">➕ Регистрация участника группы</h2>
+          <h2 class="card-title" style="display: flex; align-items: center; gap: 8px;"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg> Регистрация участника группы</h2>
           <p class="card-subtitle">Создание доступа для личного дневника «Мой ритм»</p>
         </div>
       </div>
@@ -689,7 +694,7 @@
           <div style="display: flex; gap: 8px;">
             <input type="text" id="admin-add-pass" class="form-input" placeholder="Введите пароль (мин. 4 знака)" required style="font-family: monospace; font-size: 1.02rem; font-weight: 600;">
             <button type="button" id="btn-admin-gen-pass-add" class="btn btn-outline" style="white-space: nowrap; flex-shrink: 0;" title="Сгенерировать простой запоминающийся пароль">
-              🎲 Сгенерировать
+              <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M12 12h.01"/><path d="M16 16h.01"/><path d="M8 8h.01"/></svg> Сгенерировать
             </button>
           </div>
           <div class="form-hint">Участник сможет легко ввести этот пароль на телефоне (например, «ритм-42» или «1234»)</div>
@@ -707,10 +712,10 @@
 
         <div style="display: flex; flex-direction: column; gap: 10px;">
           <button type="submit" class="btn btn-primary btn-full" id="btn-admin-save-participant">
-            💾 Зарегистрировать участника
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Зарегистрировать участника
           </button>
           <button type="button" class="btn btn-accent btn-full" id="btn-admin-save-and-copy">
-            📋 Сохранить и скопировать карточку для WhatsApp
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Сохранить и скопировать карточку для WhatsApp
           </button>
         </div>
       </form>
@@ -726,7 +731,7 @@
       
       <div class="card-header" style="margin-bottom: 16px;">
         <div>
-          <h2 class="card-title">✏️ Редактирование участника</h2>
+          <h2 class="card-title" style="display: flex; align-items: center; gap: 8px;"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Редактирование участника</h2>
           <p class="card-subtitle">Изменение данных профиля и пароля доступа</p>
         </div>
       </div>
@@ -749,7 +754,7 @@
           <div style="display: flex; gap: 8px;">
             <input type="text" id="admin-edit-pass" class="form-input" placeholder="Оставьте прежним или измените" style="font-family: monospace; font-size: 1.02rem; font-weight: 600;">
             <button type="button" id="btn-admin-gen-pass-edit" class="btn btn-outline" style="white-space: nowrap; flex-shrink: 0;">
-              🎲 Новый
+              <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M12 12h.01"/><path d="M16 16h.01"/><path d="M8 8h.01"/></svg> Новый
             </button>
           </div>
           <div class="form-hint">Вы можете изменить пароль или напомнить его участнику</div>
@@ -760,7 +765,7 @@
             Отмена
           </button>
           <button type="submit" class="btn btn-primary" style="flex: 2;">
-            💾 Сохранить изменения
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Сохранить изменения
           </button>
         </div>
       </form>
@@ -776,7 +781,7 @@
       
       <div class="card-header" style="margin-bottom: 14px;">
         <div>
-          <h2 class="card-title">✍️ Экспресс-срез на группе: <span id="admin-entry-name" style="color: var(--color-accent);">Участник</span></h2>
+          <h2 class="card-title" style="display: flex; align-items: center; gap: 8px;"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Экспресс-срез на группе: <span id="admin-entry-name" style="color: var(--color-accent);">Участник</span></h2>
           <p class="card-subtitle">Фиксация состояния на шеринге с анализом нейросети AnyModel</p>
         </div>
       </div>
@@ -790,7 +795,7 @@
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <div>
               <label class="form-label" for="admin-chk-date" style="margin-bottom: 2px; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 6px;">
-                <span>📅</span> Дата среза (можно задним числом) *
+                <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="m9 16 2 2 4-4"/></svg> Дата среза (можно задним числом) *
               </label>
               <div class="form-hint" style="margin-top: 0;">Укажите дату очной сессии или встречи группы</div>
             </div>
@@ -808,7 +813,7 @@
           <!-- Тревожность -->
           <div class="scale-card">
             <div class="scale-card-header">
-              <span class="scale-name">🌊 Тревожность (↓ лучше)</span>
+              <span class="scale-name"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c3-4 6-4 8 0s6 4 8 0 4-4 4-4"/><path d="M2 17c3-4 6-4 8 0s6 4 8 0 4-4 4-4"/></svg> Тревожность (↓ лучше)</span>
               <span class="scale-value-badge" id="admin-chk-anxiety-badge">5</span>
             </div>
             <input type="range" min="1" max="10" value="5" class="scale-slider" id="admin-chk-anxiety-range">
@@ -822,7 +827,7 @@
           <!-- Сон -->
           <div class="scale-card">
             <div class="scale-card-header">
-              <span class="scale-name">🌙 Сон (↑ лучше)</span>
+              <span class="scale-name"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg> Сон (↑ лучше)</span>
               <span class="scale-value-badge" id="admin-chk-sleep-badge">5</span>
             </div>
             <input type="range" min="1" max="10" value="5" class="scale-slider" id="admin-chk-sleep-range">
@@ -836,7 +841,7 @@
           <!-- Настроение -->
           <div class="scale-card">
             <div class="scale-card-header">
-              <span class="scale-name">🌿 Настроение (↑ лучше)</span>
+              <span class="scale-name"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg> Настроение (↑ лучше)</span>
               <span class="scale-value-badge" id="admin-chk-mood-badge">5</span>
             </div>
             <input type="range" min="1" max="10" value="5" class="scale-slider" id="admin-chk-mood-range">
@@ -850,7 +855,7 @@
           <!-- Энергия -->
           <div class="scale-card">
             <div class="scale-card-header">
-              <span class="scale-name">⚡ Энергия (↑ лучше)</span>
+              <span class="scale-name"><svg class="icon-svg icon-svg-metric" viewBox="0 0 24 24" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Энергия (↑ лучше)</span>
               <span class="scale-value-badge" id="admin-chk-energy-badge">5</span>
             </div>
             <input type="range" min="1" max="10" value="5" class="scale-slider" id="admin-chk-energy-range">
@@ -879,8 +884,8 @@
         <!-- Опция генерации отклика ИИ -->
         <div style="background: var(--color-bg-alt); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 18px; display: flex; align-items: center; gap: 10px;">
           <input type="checkbox" id="admin-chk-ai-enabled" checked style="width: 18px; height: 18px; accent-color: var(--color-accent); cursor: pointer;">
-          <label for="admin-chk-ai-enabled" style="font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--color-primary);">
-            ✨ Запросить поддерживающий отклик нейросети AnyModel (nemotron-3-ultra-550b)
+          <label for="admin-chk-ai-enabled" style="font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--color-primary); display: flex; align-items: center; gap: 6px;">
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg> Запросить поддерживающий отклик нейросети AnyModel (nemotron-3-ultra-550b)
           </label>
         </div>
 
@@ -889,7 +894,7 @@
             Отмена
           </button>
           <button type="submit" class="btn btn-primary" id="btn-admin-entry-submit" style="flex: 2;">
-            ✨ Сохранить срез и запросить отклик
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg> Сохранить срез и запросить отклик
           </button>
         </div>
       </form>
@@ -904,7 +909,7 @@
       <button class="modal-close-btn" id="modal-vk-close">&times;</button>
       
       <div class="card-header" style="margin-bottom: 16px; text-align: center;">
-        <div style="font-size: 2rem; margin-bottom: 6px;">🔹</div>
+        <div style="font-size: 1.8rem; margin-bottom: 6px; color: var(--color-primary);"><svg class="icon-svg icon-svg-lg" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="4" ry="4"/><path d="M12 8v8"/><path d="M8 12h8"/></svg></div>
         <h2 class="card-title">Вход через ВКонтакте</h2>
         <p class="card-subtitle">Вход в дневник наблюдений через профиль VK</p>
       </div>
@@ -931,7 +936,7 @@
       <button class="modal-close-btn" id="modal-reset-close">&times;</button>
       
       <div class="card-header" style="margin-bottom: 16px; text-align: center;">
-        <div style="font-size: 2rem; margin-bottom: 6px;">🔑</div>
+        <div style="margin-bottom: 8px; color: var(--color-primary);"><svg class="icon-svg icon-svg-lg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg></div>
         <h2 class="card-title">Восстановление пароля</h2>
         <p class="card-subtitle">Введите email, указанный при регистрации</p>
       </div>
@@ -977,15 +982,15 @@
 
       <!-- Переключатель платформы -->
       <div class="auth-tabs" style="grid-template-columns: 1fr 1fr; margin-bottom: 16px;">
-        <button type="button" class="auth-tab active" id="tab-pwa-android">🤖 Android</button>
-        <button type="button" class="auth-tab" id="tab-pwa-ios">🍏 iPhone (iOS)</button>
+        <button type="button" class="auth-tab active" id="tab-pwa-android"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg> Android</button>
+        <button type="button" class="auth-tab" id="tab-pwa-ios"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><line x1="12" x2="12.01" y1="18" y2="18"/></svg> iPhone (iOS)</button>
       </div>
 
       <!-- Вкладка 1: Android -->
       <div id="pwa-pane-android">
         <div id="pwa-android-prompt-box" style="display: none; margin-bottom: 16px; text-align: center;">
           <button type="button" id="btn-pwa-direct-install" class="btn btn-primary btn-full" style="padding: 13px; font-size: 1rem; font-weight: 700; box-shadow: 0 4px 14px rgba(31,95,78,0.25);">
-            ⚡ Установить в 1 клик
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Установить в 1 клик
           </button>
           <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 6px;">
             Иконка появится на рабочем столе смартфона
@@ -1023,21 +1028,21 @@
           <div style="display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px;">
             <div style="background: var(--color-primary-soft); color: var(--color-primary); font-weight: 800; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem;">1</div>
             <div style="font-size: 0.88rem; line-height: 1.45;">
-              Откройте сайт именно в <strong>Safari</strong> 🧭 <em>(если вы в Telegram или VK — нажмите внизу ⋮ и выберите «Открыть в Safari»)</em>.
+              Откройте сайт именно в <strong>Safari</strong> <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg> <em>(если вы в Telegram или VK — нажмите внизу ⋮ и выберите «Открыть в Safari»)</em>.
             </div>
           </div>
 
           <div style="display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px;">
             <div style="background: var(--color-primary-soft); color: var(--color-primary); font-weight: 800; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem;">2</div>
             <div style="font-size: 0.88rem; line-height: 1.45;">
-              В нижней панели Safari нажмите кнопку <strong>«Поделиться»</strong> <span style="font-size: 1.15rem; display: inline-block; vertical-align: middle;">⎋</span> <em>(квадрат со стрелкой вверх)</em>.
+              В нижней панели Safari нажмите кнопку <strong>«Поделиться»</strong> <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg> <em>(квадрат со стрелкой вверх)</em>.
             </div>
           </div>
 
           <div style="display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px;">
             <div style="background: var(--color-primary-soft); color: var(--color-primary); font-weight: 800; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem;">3</div>
             <div style="font-size: 0.88rem; line-height: 1.45;">
-              Прокрутите меню вниз и выберите <strong>«На экран "Домой"»</strong> ➕.
+              Прокрутите меню вниз и выберите <strong>«На экран "Домой"»</strong> <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg>.
             </div>
           </div>
 
@@ -1119,13 +1124,13 @@
 
         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
           <button type="button" class="btn btn-outline btn-sm" id="btn-export-data">
-            💾 Экспорт в JSON
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> Экспорт в JSON
           </button>
           <button type="button" class="btn btn-outline btn-sm" id="btn-import-data">
-            📥 Импорт из JSON
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg> Импорт из JSON
           </button>
-          <button type="button" class="btn btn-outline btn-sm" id="btn-reset-demo" style="color: #E06D53;">
-            🔄 Сброс демо-данных
+          <button type="button" class="btn btn-outline btn-sm" id="btn-reset-demo" style="color: var(--scale-anxiety);">
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg> Сброс демо-данных
           </button>
         </div>
 
