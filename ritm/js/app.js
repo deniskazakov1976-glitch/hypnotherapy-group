@@ -492,6 +492,30 @@ class App {
       });
     }
 
+    // Кнопка внесения среза в шапке досье выбранного участника
+    const btnDossierAdd = document.getElementById('btn-dossier-add-checkin');
+    if (btnDossierAdd) {
+      btnDossierAdd.addEventListener('click', () => {
+        if (this.selectedTherapistPatientId) {
+          this.openExpressCheckinModal(this.selectedTherapistPatientId);
+        } else {
+          this.showToast('Выберите участника для внесения среза', 'warning');
+        }
+      });
+    }
+
+    // Кнопка внесения среза в шапке истории отчетов
+    const btnTimelineAdd = document.getElementById('btn-timeline-add-checkin');
+    if (btnTimelineAdd) {
+      btnTimelineAdd.addEventListener('click', () => {
+        if (this.selectedTherapistPatientId) {
+          this.openExpressCheckinModal(this.selectedTherapistPatientId);
+        } else {
+          this.showToast('Выберите участника для внесения среза', 'warning');
+        }
+      });
+    }
+
     // Кнопка облачной синхронизации
     const btnSyncCloud = document.getElementById('btn-admin-sync-cloud');
     if (btnSyncCloud) {
@@ -810,17 +834,17 @@ class App {
     if (!user) return;
 
     const submitBtn = document.getElementById('btn-submit-checkin');
-    const originalText = submitBtn.textContent;
+    const originalHtml = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = `${ICONS.sparkles} Ассистент бережно анализирует ответ...`;
 
     try {
-      const weekText = document.getElementById('chk-week-text').value;
-      const anxiety = parseInt(document.getElementById('chk-anxiety-range').value, 10);
-      const sleep = parseInt(document.getElementById('chk-sleep-range').value, 10);
-      const mood = parseInt(document.getElementById('chk-mood-range').value, 10);
-      const energy = parseInt(document.getElementById('chk-energy-range').value, 10);
-      const insights = document.getElementById('chk-insights').value;
+      const weekText = (document.getElementById('chk-week-text')?.value || '').trim();
+      const anxiety = parseInt(document.getElementById('chk-anxiety-range').value, 10) || 5;
+      const sleep = parseInt(document.getElementById('chk-sleep-range').value, 10) || 5;
+      const mood = parseInt(document.getElementById('chk-mood-range').value, 10) || 5;
+      const energy = parseInt(document.getElementById('chk-energy-range').value, 10) || 5;
+      const insights = (document.getElementById('chk-insights')?.value || '').trim();
 
       const checkinDraft = {
         weekText,
@@ -831,8 +855,17 @@ class App {
         insights
       };
 
-      // Генерация отклика ИИ с проверкой кризисного протокола
-      const aiResult = await aiService.generateCheckinResponse(user.name, checkinDraft);
+      // Генерация отклика ИИ с проверкой кризисного протокола (безопасный перехват)
+      let aiResult;
+      try {
+        aiResult = await aiService.generateCheckinResponse(user.name, checkinDraft);
+      } catch (aiErr) {
+        console.warn('Patient AI checkin fallback:', aiErr);
+        aiResult = {
+          text: aiService.generateEmpatheticFallback(user.name, checkinDraft),
+          isCrisis: aiService.detectCrisis(weekText + ' ' + insights) || aiService.detectNumericCrisis(checkinDraft)
+        };
+      }
 
       const checkinRecord = {
         ...checkinDraft,
@@ -846,6 +879,7 @@ class App {
 
       this.closeModal('modal-checkin');
       document.getElementById('form-weekly-checkin').reset();
+      this.setCheckinStep(1);
 
       if (aiResult.isCrisis) {
         this.showToast('Внимание: активирован протокол экстренной поддержки', 'warning');
@@ -859,7 +893,7 @@ class App {
       this.showToast('Произошла ошибка при сохранении чек-ина: ' + err.message, 'error');
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = originalText;
+      submitBtn.innerHTML = originalHtml;
     }
   }
 
@@ -967,11 +1001,21 @@ class App {
             <div><span style="color:var(--scale-mood);">${latest?.mood ?? '—'}</span>Настр.</div>
             <div><span style="color:var(--scale-energy);">${latest?.energy ?? '—'}</span>Энергия</div>
           </div>
-          <div class="group-card-footer">
+          <div class="group-card-footer" style="display: flex; justify-content: space-between; align-items: center;">
             <span>Чек-инов: <strong>${checkins.length}</strong></span>
-            <span>Посл.: <strong>${dateNote}</strong></span>
+            <button type="button" class="btn btn-accent btn-sm btn-card-quick-checkin" data-user-id="${u.id}" style="padding: 3px 8px; font-size: 0.74rem;" title="Внести срез за очную встречу">
+              ${ICONS.edit} Срез
+            </button>
           </div>
         `;
+
+        const quickCheckinBtn = card.querySelector('.btn-card-quick-checkin');
+        if (quickCheckinBtn) {
+          quickCheckinBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.openExpressCheckinModal(u.id);
+          });
+        }
 
         card.addEventListener('click', () => {
           this.selectedTherapistPatientId = u.id;
@@ -1067,10 +1111,20 @@ class App {
 
     if (checkins.length === 0) {
       timelineEl.innerHTML = `
-        <div style="padding: 16px; color: var(--color-text-muted); text-align: center;">
-          Участник пока не отправил ни одного еженедельного чек-ина.
+        <div style="padding: 24px 16px; color: var(--color-text-muted); text-align: center; background: #FAFDFB; border-radius: var(--radius-md); border: 1px dashed var(--color-border);">
+          <div style="font-weight: 600; color: var(--color-primary); margin-bottom: 6px;">Участник пока не отправил ни одного среза</div>
+          <p style="font-size: 0.88rem; margin-bottom: 14px;">Вы можете зафиксировать первый очный срез прямо сейчас на сессии группы.</p>
+          <button type="button" class="btn btn-accent btn-sm btn-empty-add-checkin">
+            ${ICONS.edit} Внести первый срез на группе
+          </button>
         </div>
       `;
+      const btnEmpty = timelineEl.querySelector('.btn-empty-add-checkin');
+      if (btnEmpty) {
+        btnEmpty.addEventListener('click', () => {
+          this.openExpressCheckinModal(patient.id);
+        });
+      }
     } else {
       [...checkins].reverse().forEach((c, idx) => {
         const item = document.createElement('div');
@@ -1441,8 +1495,19 @@ class App {
   }
 
   openExpressCheckinModal(userId, checkinId = null) {
+    if (!userId) {
+      this.showToast('Пожалуйста, выберите участника для внесения среза', 'warning');
+      return;
+    }
+
     const user = storage.getUserById(userId);
-    if (!user) return;
+    if (!user) {
+      this.showToast('Участник не найден в базе данных', 'error');
+      return;
+    }
+
+    // Фиксируем выбранного участника, чтобы интерфейс кабинета не сбрасывался
+    this.selectedTherapistPatientId = user.id;
 
     const checkins = storage.getCheckinsByUserId(userId);
     const survey = storage.getSurveyByUserId(userId);
@@ -1500,31 +1565,64 @@ class App {
   async handleAdminEntryCheckinSubmit() {
     const userId = document.getElementById('admin-entry-user-id').value;
     const checkinId = document.getElementById('admin-entry-checkin-id').value;
-    const user = storage.getUserById(userId);
-    if (!user) return;
 
-    const dateVal = document.getElementById('admin-chk-date').value;
-    if (!dateVal) {
-      this.showToast('Пожалуйста, укажите дату среза', 'error');
+    if (!userId) {
+      this.showToast('Не удалось определить участника для сохранения среза', 'error');
       return;
     }
 
+    const user = storage.getUserById(userId);
+    if (!user) {
+      this.showToast('Ошибка: участник с таким ID не найден', 'error');
+      return;
+    }
+
+    // Сохраняем фокус на выбранном участнике
+    this.selectedTherapistPatientId = user.id;
+
+    let dateVal = document.getElementById('admin-chk-date').value;
+    if (!dateVal || !dateVal.trim()) {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      dateVal = `${yyyy}-${mm}-${dd}`;
+    }
+    dateVal = dateVal.trim();
+
+    // Робастный парсинг даты: поддержка YYYY-MM-DD, DD.MM.YYYY, DD/MM/YYYY
+    let isoDate;
+    try {
+      if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateVal)) {
+        const [d, m, y] = dateVal.split('.');
+        isoDate = new Date(`${y}-${m}-${d}T18:00:00.000Z`).toISOString();
+      } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateVal)) {
+        const [m, d, y] = dateVal.split('/');
+        isoDate = new Date(`${y}-${m}-${d}T18:00:00.000Z`).toISOString();
+      } else if (/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
+        isoDate = new Date(`${dateVal}T18:00:00.000Z`).toISOString();
+      } else {
+        const parsed = new Date(dateVal);
+        if (isNaN(parsed.getTime())) throw new Error('Некорректная дата');
+        isoDate = parsed.toISOString();
+      }
+    } catch {
+      isoDate = new Date().toISOString();
+    }
+
     const submitBtn = document.getElementById('btn-admin-entry-submit');
-    const originalText = submitBtn.textContent;
+    const originalHtml = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = `${ICONS.sparkles} Сохранение среза...`;
 
     try {
-      const anxiety = parseInt(document.getElementById('admin-chk-anxiety-range').value, 10);
-      const sleep = parseInt(document.getElementById('admin-chk-sleep-range').value, 10);
-      const mood = parseInt(document.getElementById('admin-chk-mood-range').value, 10);
-      const energy = parseInt(document.getElementById('admin-chk-energy-range').value, 10);
-      const notes = document.getElementById('admin-chk-notes').value;
-      const insights = document.getElementById('admin-chk-insights').value;
+      const anxiety = parseInt(document.getElementById('admin-chk-anxiety-range').value, 10) || 5;
+      const sleep = parseInt(document.getElementById('admin-chk-sleep-range').value, 10) || 5;
+      const mood = parseInt(document.getElementById('admin-chk-mood-range').value, 10) || 5;
+      const energy = parseInt(document.getElementById('admin-chk-energy-range').value, 10) || 5;
+      const notes = (document.getElementById('admin-chk-notes').value || '').trim();
+      const insights = (document.getElementById('admin-chk-insights').value || '').trim();
       const isAiEnabled = document.getElementById('admin-chk-ai-enabled').checked;
-
-      // Формируем дату с сохранением времени дня (18:00 UTC)
-      const isoDate = new Date(`${dateVal}T18:00:00.000Z`).toISOString();
 
       let existingCheckin = null;
       if (checkinId) {
@@ -1539,8 +1637,8 @@ class App {
         sleep,
         mood,
         energy,
-        weekText: notes.trim() || 'Срез зафиксирован ведущим на очной встрече группы',
-        insights: insights.trim(),
+        weekText: notes || 'Срез зафиксирован ведущим на очной встрече группы',
+        insights: insights,
         byTherapist: true,
         aiResponse: existingCheckin ? existingCheckin.aiResponse : null,
         isCrisis: existingCheckin ? existingCheckin.isCrisis : false,
@@ -1549,10 +1647,15 @@ class App {
 
       if (isAiEnabled) {
         submitBtn.innerHTML = `${ICONS.sparkles} AnyModel формулирует отклик...`;
-        const aiResult = await aiService.generateCheckinResponse(user.name, checkinDraft);
-        checkinDraft.aiResponse = aiResult.text;
-        checkinDraft.isCrisis = aiResult.isCrisis;
-        checkinDraft.priorityAlert = aiResult.isCrisis;
+        try {
+          const aiResult = await aiService.generateCheckinResponse(user.name, checkinDraft);
+          checkinDraft.aiResponse = aiResult.text;
+          checkinDraft.isCrisis = aiResult.isCrisis;
+          checkinDraft.priorityAlert = aiResult.isCrisis;
+        } catch (aiErr) {
+          console.warn('AI checkin response fallback:', aiErr);
+          checkinDraft.aiResponse = aiService.generateEmpatheticFallback(user.name, checkinDraft);
+        }
       }
 
       storage.saveCheckin(user.id, checkinDraft);
@@ -1561,14 +1664,20 @@ class App {
       document.getElementById('form-admin-entry-checkin').reset();
 
       const dateRu = new Date(isoDate).toLocaleDateString('ru-RU');
-      this.showToast(`Срез за ${user.name} на ${dateRu} сохранён! ${isAiEnabled ? 'Отклик AnyModel получен.' : ''}`);
+      this.showToast(`Срез за ${user.name} на ${dateRu} сохранён! ${isAiEnabled ? 'Отклик получен.' : ''}`);
       this.renderTherapistDashboard();
+
+      // Плавная прокрутка к досье для подтверждения
+      const dossierEl = document.getElementById('therapist-profile-name');
+      if (dossierEl) {
+        dossierEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     } catch (err) {
       console.error(err);
       this.showToast('Ошибка сохранения среза: ' + err.message, 'error');
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = originalText;
+      submitBtn.innerHTML = originalHtml;
     }
   }
 

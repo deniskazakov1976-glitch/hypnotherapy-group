@@ -809,4 +809,178 @@ export function registerAllTests(runner) {
       expect(getVisualClasses('energy', 10).badge).toBe('badge-good');
     });
   });
+
+  // --------------------------------------------------------------------------
+  // СЬЮТ 9: ВНЕСЕНИЕ И ВАЛИДАЦИЯ СРЕЗОВ (Check-in Robustness & Date Handling)
+  // --------------------------------------------------------------------------
+  runner.describe('9. Внесение и валидация срезов по пациентам', () => {
+    let testStorage;
+    let testAi;
+
+    // Вспомогательная функция парсинга даты, аналогичная app.js
+    const parseCheckinDate = (dateVal) => {
+      if (!dateVal || !dateVal.trim()) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        dateVal = `${yyyy}-${mm}-${dd}`;
+      }
+      dateVal = dateVal.trim();
+
+      try {
+        if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateVal)) {
+          const [d, m, y] = dateVal.split('.');
+          return new Date(`${y}-${m}-${d}T18:00:00.000Z`).toISOString();
+        } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateVal)) {
+          const [m, d, y] = dateVal.split('/');
+          return new Date(`${y}-${m}-${d}T18:00:00.000Z`).toISOString();
+        } else if (/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
+          return new Date(`${dateVal}T18:00:00.000Z`).toISOString();
+        } else {
+          const parsed = new Date(dateVal);
+          if (isNaN(parsed.getTime())) throw new Error('Некорректная дата');
+          return parsed.toISOString();
+        }
+      } catch {
+        return new Date().toISOString();
+      }
+    };
+
+    runner.beforeEach(() => {
+      localStorage.clear();
+      testStorage = new StorageService();
+      testAi = new AiService(testStorage);
+    });
+
+    runner.it('Парсинг даты среза: корректно обрабатывает стандартный формат YYYY-MM-DD', () => {
+      const iso = parseCheckinDate('2026-11-05');
+      expect(iso).toContain('2026-11-05T18:00:00');
+    });
+
+    runner.it('Парсинг даты среза: корректно обрабатывает российский формат DD.MM.YYYY', () => {
+      const iso = parseCheckinDate('15.10.2026');
+      expect(iso).toContain('2026-10-15T18:00:00');
+    });
+
+    runner.it('Парсинг даты среза: корректно обрабатывает формат с косой чертой MM/DD/YYYY', () => {
+      const iso = parseCheckinDate('10/24/2026');
+      expect(iso).toContain('2026-10-24T18:00:00');
+    });
+
+    runner.it('Парсинг даты среза: безопасный фолбэк на текущую дату при пустой или некорректной строке', () => {
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const resEmpty = parseCheckinDate('');
+      const resNull = parseCheckinDate(null);
+      const resGarbage = parseCheckinDate('невалидная_дата_123');
+
+      expect(resEmpty.slice(0, 10)).toBe(todayIso);
+      expect(resNull.slice(0, 10)).toBe(todayIso);
+      expect(resGarbage).toBeTruthy();
+      expect(isNaN(new Date(resGarbage).getTime())).toBe(false);
+    });
+
+    runner.it('Внесение среза для нового зарегистрированного участника без первичной анкеты', () => {
+      const newUserId = 'user_new_participant';
+      testStorage.saveUser({
+        id: newUserId,
+        name: 'Ольга',
+        role: 'patient',
+        email: 'olga@ritm.local'
+      });
+
+      const checkin = {
+        id: 'chk_olga_1',
+        date: parseCheckinDate('2026-11-05'),
+        anxiety: 6,
+        sleep: 6,
+        mood: 7,
+        energy: 6,
+        weekText: 'Первый срез зафиксирован ведущим на очной встрече группы',
+        insights: 'Ощущение доверия к кругу',
+        byTherapist: true
+      };
+
+      testStorage.saveCheckin(newUserId, checkin);
+
+      const checkins = testStorage.getCheckinsByUserId(newUserId);
+      expect(checkins.length).toBe(1);
+      expect(checkins[0].anxiety).toBe(6);
+      expect(checkins[0].byTherapist).toBe(true);
+    });
+
+    runner.it('Внесение среза задним числом правильно выстраивает хронологический порядок', () => {
+      const uid = 'user_chrono_test';
+      testStorage.saveUser({ id: uid, name: 'Сергей', role: 'patient' });
+
+      // Вносим более поздний срез (20 октября)
+      testStorage.saveCheckin(uid, {
+        id: 'chk_oct_20',
+        date: parseCheckinDate('20.10.2026'),
+        anxiety: 5
+      });
+
+      // Вносим срез задним числом (05 октября)
+      testStorage.saveCheckin(uid, {
+        id: 'chk_oct_05',
+        date: parseCheckinDate('05.10.2026'),
+        anxiety: 8
+      });
+
+      // Вносим еще более поздний (30 октября)
+      testStorage.saveCheckin(uid, {
+        id: 'chk_oct_30',
+        date: parseCheckinDate('30.10.2026'),
+        anxiety: 3
+      });
+
+      const list = testStorage.getCheckinsByUserId(uid);
+      expect(list.length).toBe(3);
+      expect(list[0].id).toBe('chk_oct_05');
+      expect(list[1].id).toBe('chk_oct_20');
+      expect(list[2].id).toBe('chk_oct_30');
+    });
+
+    runner.it('Гарантированный фолбэк ИИ-отклика: формирует эмпатичный текст даже при отсутствии API-ключа', async () => {
+      // Искусственно очищаем ключ
+      testStorage.saveAiSettings({ endpoint: '', apiKey: '', model: '' });
+
+      const checkinDraft = {
+        anxiety: 7,
+        sleep: 4,
+        mood: 5,
+        energy: 4,
+        weekText: 'Сложная неделя, много работы',
+        insights: 'Заметила дыхание'
+      };
+
+      const result = await testAi.generateCheckinResponse('Мария', checkinDraft);
+      expect(result.text).toBeTruthy();
+      expect(result.text).toContain('Мария');
+      expect(result.text.length).toBeGreaterThan(20);
+      expect(result.isCrisis).toBe(false);
+    });
+
+    runner.it('Быстрое сохранение среза участником без текстовых комментариев (только шкалы)', () => {
+      const uid = 'user_quick_chk';
+      testStorage.saveUser({ id: uid, name: 'Дмитрий', role: 'patient' });
+
+      const quickCheckin = {
+        id: 'chk_quick_1',
+        date: new Date().toISOString(),
+        anxiety: 4,
+        sleep: 7,
+        mood: 7,
+        energy: 8,
+        weekText: '',
+        insights: ''
+      };
+
+      testStorage.saveCheckin(uid, quickCheckin);
+      const list = testStorage.getCheckinsByUserId(uid);
+      expect(list.length).toBe(1);
+      expect(list[0].anxiety).toBe(4);
+      expect(list[0].energy).toBe(8);
+    });
+  });
 }

@@ -135,7 +135,7 @@ export class AiService {
 Дай короткий поддерживающий отклик (2-4 предложения) по правилам системного промпта.`;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
 
     try {
       const response = await fetch(aiSettings.endpoint, {

@@ -463,8 +463,11 @@
       <div class="patient-dossier-grid">
         <!-- Левая колонка: Начальная анкета и запрос -->
         <div class="initial-profile-card">
-          <div class="card-header" style="margin-bottom: 12px;">
+          <div class="card-header" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <h2 class="card-title" style="font-size: 1.1rem;" id="therapist-profile-name">Участник</h2>
+            <button type="button" class="btn btn-accent btn-sm" id="btn-dossier-add-checkin" title="Внести очный срез состояния на группе">
+              <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Внести срез
+            </button>
           </div>
 
           <div class="profile-field">
@@ -528,8 +531,11 @@
 
           <!-- История еженедельных чек-инов -->
           <div class="card">
-            <div class="card-header">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
               <h3 class="card-title" style="font-size: 1.08rem;">История еженедельных отчётов</h3>
+              <button type="button" class="btn btn-outline btn-sm" id="btn-timeline-add-checkin" title="Добавить срез за очную встречу">
+                <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg> Добавить срез
+              </button>
             </div>
             <div id="therapist-patient-timeline" class="timeline">
               <!-- Заполняется динамически -->
@@ -627,9 +633,14 @@
           </div>
 
           <div style="display: flex; gap: 10px; margin-top: 14px;">
-            <button type="button" class="btn btn-primary btn-full" id="btn-chk-to-step2">
-              Далее: добавить мысли и инсайты →
-            </button>
+            <div style="display: flex; gap: 8px; margin-top: 14px;">
+              <button type="button" class="btn btn-primary" id="btn-chk-to-step2" style="flex: 2;">
+                Далее: добавить мысли и инсайты →
+              </button>
+              <button type="submit" class="btn btn-outline" id="btn-chk-quick-submit" style="flex: 1;" title="Сохранить только баллы шкал">
+                Сохранить шкалы
+              </button>
+            </div>
           </div>
         </div>
 

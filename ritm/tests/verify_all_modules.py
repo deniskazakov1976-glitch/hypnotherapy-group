@@ -215,6 +215,11 @@ def test_participant_management(ctx):
     ctx.check("Класс modal-card-wide применен к modal-admin-entry-checkin", "modal-card modal-card-wide" in index_html)
     ctx.check("Метод фиксации очного среза с откликом ИИ handleAdminEntryCheckinSubmit()", "handleAdminEntryCheckinSubmit()" in app_js)
     ctx.check("Метод облачной синхронизации syncCloudData() в app.js", "syncCloudData()" in app_js)
+    ctx.check("Кнопка внесения среза в шапке досье btn-dossier-add-checkin", 'id="btn-dossier-add-checkin"' in index_html)
+    ctx.check("Кнопка внесения среза в таймлайне btn-timeline-add-checkin", 'id="btn-timeline-add-checkin"' in index_html)
+    ctx.check("Кнопка быстрого среза на карточках пульса группы btn-card-quick-checkin", "btn-card-quick-checkin" in app_js)
+    ctx.check("Кнопка быстрого сохранения шкал пациентом btn-chk-quick-submit", 'id="btn-chk-quick-submit"' in index_html)
+    ctx.check("Робастный парсинг форматов дат (DD.MM.YYYY, YYYY-MM-DD)", "d, m, y" in app_js and "isoDate" in app_js)
 
 def main():
     print("=" * 70)
